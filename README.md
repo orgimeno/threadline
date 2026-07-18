@@ -115,6 +115,8 @@ npm run build
 
 No `OPENAI_API_KEY` is needed yet because no OpenAI call has been implemented. When that integration is added, the key will be read by the backend only.
 
+The repeatable browser, curl, Postman, and VS Code review procedure is documented in [docs/testing/manual-import-validation.md](docs/testing/manual-import-validation.md).
+
 ## Implementation status and next steps
 
 | Area | Status | Notes |

@@ -145,3 +145,12 @@ This log records product and technical decisions. Valid statuses are `planned`, 
 - **Reason:** per-source envelopes preserve filenames and locator semantics, keep processing sequential, isolate prompt-injection defenses from imported content, and prevent private conversation text from entering technical validation responses.
 - **Codex contribution:** separated internal validated content from public source summaries, implemented extraction request preparation and Markdown line numbering, and added tests for deterministic source identifiers, strict schema attachment, instruction boundaries, and absence of source content in HTTP responses.
 - **Pending:** choose and implement a token-aware chunking budget, translate envelopes to the OpenAI Responses API, add retries and evaluations, and perform the planned manual browser and HTTP-client review.
+
+## 2026-07-18 — Define a repeatable manual import review
+
+- **Problem/question:** How can the current browser-to-backend boundary be reviewed consistently outside automated tests?
+- **Options considered:** rely on ad hoc terminal commands; add private real exports; document safe checks using fictional and temporary synthetic sources.
+- **Decision:** provide one manual guide covering browser behavior, direct backend and Vite-proxy curl requests, Postman multipart configuration, VS Code review points, partial failure, complete failure, and file-size rejection.
+- **Reason:** repeatable manual checks make UI and HTTP behavior visible without adding private fixtures or pretending that automated component tests replace human inspection.
+- **Codex contribution:** documented exact startup commands, expected responses, safe temporary fixtures, review boundaries, and a completion checklist.
+- **Pending:** execute the guide with the project owner and record any usability or contract changes discovered during the review.
