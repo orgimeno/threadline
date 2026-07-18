@@ -35,6 +35,16 @@ The backend will use the OpenAI Responses API with `gpt-5.6`. It will request st
 
 The key will be read only by the backend process through an environment variable. It will not be exposed in client code, example files, API responses, or the repository.
 
+## Parsing boundary and AI responsibility
+
+The backend performs only deterministic technical checks before the model call: file size and type limits, readable text encoding, and JSON syntax parsing for `.json` files. Markdown is treated as readable text and does not need to match a fixed structure. The backend preserves filenames and source metadata but does not require ChatGPT, Gemini, Claude, or another provider's export layout.
+
+GPT-5.6 is responsible for semantic interpretation of heterogeneous source content. It identifies useful messages or passages, classifies context, normalizes dates when evidence supports it, and returns entries that match Threadline's canonical schema. The backend then validates the model response and verifies its source references before the frontend shows the entries as `pending`.
+
+Malformed JSON is reported per file with a stable error code and human-readable reason. Threadline does not silently repair malformed JSON through the model, because doing so could break provenance. Automatic repair may be considered as a separate, explicitly reviewed feature later.
+
+For generic provenance, valid JSON uses JSON Pointer locations and Markdown uses one-based line ranges. This generic source map is deliberately different from a provider-specific import adapter. The model proposes source references; the backend verifies them, then assigns temporary entry identifiers and `pending` status.
+
 ## Persistence and state
 
 The MVP does not include a database or permanent storage. Imported files, intermediate results, and review decisions will exist temporarily during the active session. A browser reload or session expiry may lose pending work; the implemented interface must communicate this behavior.

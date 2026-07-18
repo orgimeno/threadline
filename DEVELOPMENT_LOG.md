@@ -46,3 +46,57 @@ This log records product and technical decisions. Valid statuses are `planned`, 
 - **Reason:** validate the user workflow before expanding infrastructure.
 - **Codex contribution:** included this condition in the architecture decisions and README.
 - **Pending:** revisit when real services and commands exist.
+
+## 2026-07-18 — Define the canonical context schema
+
+- **Problem/question:** What is the smallest stable representation that can travel from extraction to review and final export?
+- **Options considered:** keep only free text; add a large memory model with histories, hashes, embeddings, and relationships; define a focused entry contract with provenance and review state.
+- **Decision:** use `id`, `type`, `content`, `date`, `status`, and `sourceReferences` for every entry, with a root `schemaVersion` value of `threadline.v1`. Dates preserve their original expression and may remain unnormalized. The status vocabulary is `pending`, `accepted`, `edited`, and `rejected`.
+- **Reason:** this covers the MVP workflow without over-designing a permanent memory system. Source references provide traceability, while edit history and `originalContent` are intentionally excluded.
+- **Codex contribution:** compared the proposed fields, challenged unnecessary additions, and documented the agreed contract before any implementation work.
+- **Pending:** validate the contract against representative JSON and Markdown import cases, then define the API boundary around it.
+
+## 2026-07-18 — Add time precision and the first API boundary
+
+- **Problem/question:** How should entries represent events that include hours and minutes, and what is the smallest useful frontend/backend contract?
+- **Options considered:** keep date-only precision; add a generic `exact` value; add explicit `hour` and `minute` precision plus an optional time zone.
+- **Decision:** use `minute`, `hour`, `day`, `month`, `year`, and `unknown` precision values. Add `timezone` as a nullable IANA time-zone name. Do not assume UTC or invent a time zone. Document `GET /export?format=json`, `GET /export?format=markdown`, and `POST /entries/:id` as the initial boundary.
+- **Reason:** explicit precision preserves evidence without pretending to know more than the source provides. The three routes cover review mutation and export while leaving import and model processing open for deliberate design.
+- **Codex contribution:** evaluated the time-zone trade-off, kept the API surface intentionally small, and documented the missing import/processing boundary instead of silently adding routes.
+- **Pending:** review the contract, then design the import-to-extraction request and response shape.
+
+## 2026-07-18 — Choose synchronous import processing for the MVP
+
+- **Problem/question:** Should file import and GPT-5.6 extraction return immediately with a job identifier, or keep the request open until entries are ready?
+- **Options considered:** synchronous `POST /imports` returning `pending` entries; asynchronous `202 Accepted` with a job identifier and a polling endpoint; a streaming protocol.
+- **Decision:** use synchronous `POST /imports` for the MVP. It accepts repeated `files` fields in `multipart/form-data`, processes bounded imports, and returns source results, `pending` entries, and per-source errors in one response.
+- **Reason:** the first vertical slice should minimize moving parts and make the flow easy to observe. A job queue, polling, and progress protocol would add infrastructure before we know that latency requires them.
+- **Codex contribution:** explained the sync/async trade-off, added the import contract, and documented the future asynchronous extension without implementing it.
+- **Pending:** choose practical file and request limits, then define the exact generic JSON/Markdown source parser behavior.
+
+## 2026-07-18 — Set practical synchronous import limits
+
+- **Problem/question:** What limits keep a synchronous MVP import predictable without making ordinary multi-file use frustrating?
+- **Options considered:** no limits; very small single-file imports; bounded multi-file imports with a request timeout and an entry cap.
+- **Decision:** allow up to 10 files, 2 MiB per file, 10 MiB per request, 200 proposed entries, and 120 seconds of total synchronous processing time. Process sources sequentially and allow internal source chunking.
+- **Reason:** these defaults bound memory, latency, review-queue size, and model cost while still supporting a normal small export set. They can be measured and revised once the first implementation exists.
+- **Codex contribution:** selected and documented the limits as an MVP operating contract instead of leaving them implicit.
+- **Pending:** define the generic JSON/Markdown parser behavior and the exact chunking strategy.
+
+## 2026-07-18 — Delegate heterogeneous source interpretation to GPT-5.6
+
+- **Problem/question:** How can Threadline accept unknown JSON layouts and Markdown exports without building provider-specific adapters first?
+- **Options considered:** require a fixed normalized input format; create adapters for every provider; perform only technical checks in the backend and delegate semantic interpretation to GPT-5.6.
+- **Decision:** the backend checks encoding, file limits, file type, and JSON syntax, then preserves source metadata and sends readable content to GPT-5.6. The model interprets the source and returns canonical entries. Malformed JSON is skipped and reported per file with a reason; it is not silently repaired.
+- **Reason:** provider exports are heterogeneous, and the product's value is acting as an intermediary, prompt boundary, and human-review editor rather than requiring a universal input schema.
+- **Codex contribution:** corrected the earlier assumption that the backend should normalize provider-specific structures and aligned the API, architecture, and README descriptions.
+- **Pending:** define the prompt boundary and source-location strategy for model output without implementing the processing flow yet.
+
+## 2026-07-18 — Define generic extraction provenance and prompt boundary
+
+- **Problem/question:** How can GPT-5.6 interpret arbitrary valid JSON and Markdown while Threadline still verifies where each proposal came from?
+- **Options considered:** provider-specific adapters; unverified model-written locations; generic source locators that the backend can validate.
+- **Decision:** use JSON Pointer locations for valid JSON and one-based line ranges for Markdown. The backend supplies metadata and untrusted source content, GPT-5.6 proposes `type`, `content`, `date`, and `sourceReferences`, and the backend verifies locators before assigning `id` and `pending` status.
+- **Reason:** this preserves the product's general-input promise without giving up traceability or relying on the model to make final state decisions.
+- **Codex contribution:** selected a provider-neutral locator strategy and documented the model input boundary, output responsibility, and privacy disclosure.
+- **Pending:** create the application skeleton and translate these contracts into runtime types and validation.

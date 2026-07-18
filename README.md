@@ -14,14 +14,18 @@ Threadline offers a different workflow: import individual files, extract candida
 
 1. The user imports multiple JSON or Markdown files.
 2. The frontend sends the files to the backend with `multipart/form-data`.
-3. The backend validates, reads, and normalizes every source while keeping its source reference.
-4. The backend prepares source fragments for GPT-5.6 and requests structured JSON.
+3. The backend performs lightweight technical validation and keeps each source reference.
+4. The backend sends heterogeneous source content to GPT-5.6 for semantic interpretation and structured JSON extraction.
 5. The backend validates and consolidates the proposed entries.
 6. The frontend presents a review queue. The user can accept, edit, or reject each entry.
 7. Threadline builds the final context from accepted and edited entries.
 8. The user previews and exports it as JSON or Markdown; the export can become input for a later import cycle.
 
 The planned diagram is available at [docs/architecture/threadline-flow.mmd](docs/architecture/threadline-flow.mmd).
+
+The canonical context contract is documented in [docs/architecture/canonical-schema.md](docs/architecture/canonical-schema.md). The MVP export root uses `schemaVersion: "threadline.v1"`; entries use the controlled types and review states described there.
+
+The planned extraction boundary is documented in [docs/architecture/extraction-contract.md](docs/architecture/extraction-contract.md). It explains how Threadline can interpret arbitrary valid JSON and Markdown without provider-specific adapters while preserving source traceability.
 
 ## MVP scope
 
@@ -49,7 +53,7 @@ Communication will use a REST API. Files and state will exist only during the in
 
 ## Planned GPT-5.6 integration
 
-The backend will call the Responses API with `gpt-5.6` and a structured-output schema. Each request will contain normalized content and source metadata; the model will return proposed entries, not irreversible final context. After the call, the backend will validate the schema, associate proposals with their sources, and place each proposal in `pending` status for human review.
+The backend will call the Responses API with `gpt-5.6` and a structured-output schema. Each request will contain readable source content and source metadata; the model will interpret heterogeneous JSON or Markdown and return proposed entries, not irreversible final context. After the call, the backend will validate the schema, associate proposals with their sources, and place each proposal in `pending` status for human review.
 
 This design uses the GPT-5.6 family's support for the Responses API and structured outputs, but remains **planned** until it is implemented and tested. See the [GPT-5.6 model documentation](https://developers.openai.com/api/docs/models/gpt-5.6-sol).
 
@@ -83,7 +87,7 @@ There is no runnable application code or installed dependency yet. Once the fron
 | --- | --- | --- |
 | Product and architecture documentation | implemented | This documentation foundation is complete for the current phase. |
 | Fictional examples | implemented | Reference input and output files are included. |
-| Canonical entry schema | in progress | It must be finalized before importers are built. |
+| Canonical entry schema | implemented | The MVP contract is documented; runtime validation remains planned. |
 | Frontend and backend | planned | They will be built after the architecture is validated. |
 | Live OpenAI call | planned | It requires a backend, schema, and secure configuration. |
 | Review and export | planned | They require an interface and temporary session state. |
