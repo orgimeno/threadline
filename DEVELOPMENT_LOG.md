@@ -109,3 +109,12 @@ This log records product and technical decisions. Valid statuses are `planned`, 
 - **Reason:** the workspace can now be run, tested, and extended one boundary at a time while preserving the documented contracts and truthful implementation status.
 - **Codex contribution:** created the package structure, application shells, route and component tests, root development commands, and current-state documentation; then verified type checking, tests, and production builds.
 - **Pending:** implement multipart parsing and technical source validation without calling OpenAI, then define temporary session state before enabling review mutations and real exports.
+
+## 2026-07-18 — Implement the local import validation boundary
+
+- **Problem/question:** What useful part of `POST /imports` can be implemented before introducing model calls or temporary session state?
+- **Options considered:** keep returning `501 Not Implemented`; connect OpenAI immediately; implement deterministic multipart and source validation first.
+- **Decision:** accept only the repeated multipart field `files`; enforce 10 files, 2 MiB per file, and 10 MiB per request; require `.json`, `.md`, or `.markdown` filenames and valid UTF-8; reject empty files; parse JSON syntax without assuming a provider layout; and return valid sources plus safe per-file errors. Valid sources use the temporary source status `validated`, while `entries` remains empty.
+- **Reason:** this creates a real, testable frontend/backend boundary while keeping semantic interpretation and human-review state separate. Partial success lets one malformed source fail without discarding other valid imports.
+- **Codex contribution:** implemented the Fastify multipart boundary, pure source validation, stable request and per-file errors, request limits, and route tests for successful, partial, invalid, and oversized imports.
+- **Pending:** connect the frontend to this endpoint, display source validation results, and then define the runtime extraction schema before calling GPT-5.6.

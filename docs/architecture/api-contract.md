@@ -1,6 +1,6 @@
 # Threadline API contract (initial)
 
-> Status: **in progress**. The route skeleton exists, but import processing, review state, and real session exports are not implemented yet.
+> Status: **in progress**. Technical import validation exists, but semantic extraction, review state, and real session exports are not implemented yet.
 
 ## Purpose
 
@@ -21,6 +21,32 @@ The initial contract covers import, GPT-5.6 processing, review mutation, and exp
 
 Accepts one or more JSON or Markdown files, performs lightweight technical validation, sends the source content to GPT-5.6 through the backend for semantic interpretation, and returns the extracted entries in `pending` status.
 
+#### Current implementation stage
+
+The current endpoint implements only the deterministic first half of this contract. It receives multipart files, enforces the MVP limits, validates UTF-8 and file extensions, parses JSON syntax, and returns per-file results. It does not call OpenAI or retain source content after the response.
+
+A technically valid source currently has the source status `validated`. This is not an entry review status and does not add to or replace `pending`, `accepted`, `edited`, or `rejected`. Until semantic extraction is implemented, the endpoint returns `entries: []`.
+
+Current response example:
+
+```json
+{
+  "importId": "import-550e8400-e29b-41d4-a716-446655440000",
+  "sources": [
+    {
+      "file": "fictional-notes.json",
+      "format": "json",
+      "sizeBytes": 128,
+      "status": "validated"
+    }
+  ],
+  "entries": [],
+  "errors": []
+}
+```
+
+`importId` identifies this response but is not persisted or available through a lookup route yet.
+
 #### Request
 
 - Content type: `multipart/form-data`
@@ -29,6 +55,7 @@ Accepts one or more JSON or Markdown files, performs lightweight technical valid
 - Accepted extensions: `.json`, `.md`, and `.markdown`.
 - The MVP accepts arbitrary readable JSON and Markdown content. Provider-specific adapters are not part of this contract.
 - The backend does not require a provider-specific field layout before sending a valid source to GPT-5.6.
+- Client-supplied MIME types are not authoritative; the current technical boundary uses the filename extension and validates the actual text content.
 
 #### MVP request limits
 
@@ -115,6 +142,8 @@ The response may include successfully processed sources and per-source errors. A
 
 Malformed JSON is reported and skipped; Threadline does not silently ask GPT-5.6 to repair it. Markdown has no equivalent structural parse requirement and is accepted as text when it is readable and within the limits.
 
+The current implementation also reports `invalid_utf8`, `empty_file`, `unsupported_file_type`, and `unexpected_file_field`. If at least one source is valid, these errors are returned alongside the valid sources with `200 OK`. If no source passes validation, the endpoint returns `422 Unprocessable Entity` with `no_valid_sources` and the per-file errors.
+
 Example per-source error:
 
 ```json
@@ -129,14 +158,14 @@ If the request itself is invalid or no source can be processed, the backend retu
 
 #### Expected errors
 
-- `400 Bad Request`: malformed multipart request, unsupported extension, or invalid source content.
+- `400 Bad Request`: non-multipart request, no files, or unexpected multipart fields.
 - `413 Payload Too Large`: configured file or request limit exceeded.
-- `422 Unprocessable Entity`: the source is readable but contains no extractable conversation content.
+- `422 Unprocessable Entity`: no supplied source passes technical validation, or later the readable sources contain no extractable conversation content.
 - `504 Gateway Timeout`: synchronous processing exceeds the 120-second request limit.
 - `502 Bad Gateway`: OpenAI is unavailable or returns a response that fails backend validation.
 - `503 Service Unavailable`: the temporary session processor is unavailable.
 
-The route skeleton uses the shared `{ "error": { "code", "message" } }` envelope for request-level errors. Endpoint-specific runtime schemas and safe diagnostic fields will be finalized when multipart validation is implemented.
+The route uses the shared `{ "error": { "code", "message" } }` envelope for request-level errors. A `no_valid_sources` response also includes the safe per-file `errors` array.
 
 ### `GET /export?format=json`
 

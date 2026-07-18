@@ -1,6 +1,6 @@
 # Threadline
 
-> Project status: **in progress**. The repository now contains a tested frontend and backend skeleton. Import processing, the review workflow, session state, and the OpenAI integration remain planned.
+> Project status: **in progress**. The repository contains a tested frontend shell and a backend that performs bounded technical validation of multipart JSON and Markdown imports. Semantic extraction, the review workflow, session state, and the OpenAI integration remain planned.
 
 Threadline is a web application that turns unstructured exports of AI conversations into structured, traceable context that a person can review.
 
@@ -101,7 +101,7 @@ npm run dev:backend
 The frontend development server prints its local URL. The backend listens on `http://localhost:3000` by default and currently exposes these skeleton routes:
 
 - `GET /health` returns a service health response.
-- `POST /imports` returns `501 Not Implemented` until multipart validation and extraction exist.
+- `POST /imports` validates bounded multipart JSON and Markdown sources and reports per-file results. It does not perform semantic extraction yet.
 - `POST /entries/:id` returns `501 Not Implemented` until temporary review state exists.
 - `GET /export?format=json` and `GET /export?format=markdown` return empty placeholder exports.
 
@@ -123,9 +123,9 @@ No `OPENAI_API_KEY` is needed yet because no OpenAI call has been implemented. W
 | Fictional examples | implemented | Reference input and output files are included. |
 | Canonical entry schema | implemented | The MVP contract is documented; runtime validation remains planned. |
 | Frontend shell | in progress | The import selection, empty review queue, and disabled export controls are present; backend integration is planned. |
-| Backend skeleton | in progress | The Fastify application, health endpoint, contract placeholders, and route tests exist. |
+| Backend import boundary | in progress | Multipart limits, UTF-8 decoding, extension checks, JSON syntax validation, and per-file results are implemented. Extraction remains planned. |
 | Automated checks | implemented | Frontend component tests, backend route tests, type checking, and production builds run through root npm scripts. |
 | Live OpenAI call | planned | It requires a backend, schema, and secure configuration. |
 | Review and export | planned | They require an interface and temporary session state. |
 
-The next implementation step is the first local import boundary: multipart parsing and technical validation for bounded JSON and Markdown uploads. It must not call OpenAI yet. The extraction prompt, model response schema, retries, and evaluations remain deliberate decisions before the live integration.
+The next implementation step is to connect the frontend file selection to the validated backend import boundary and display its per-file results. This still does not require an OpenAI call. The extraction prompt, model response schema, retries, and evaluations remain deliberate decisions before the live integration.
