@@ -1,6 +1,6 @@
 # Threadline extraction contract
 
-> Status: **planned**. This is the design contract for future GPT-5.6 processing; no prompt, API call, or application code exists yet.
+> Status: **in progress**. The model-output JSON Schema and runtime validator exist; prompt construction and the OpenAI API call remain **planned**.
 
 ## Purpose
 
@@ -57,6 +57,8 @@ The request must not enable tools. Threadline needs structured extraction, not w
 ## Model output and backend completion
 
 GPT-5.6 proposes candidates with `type`, `content`, `date`, and `sourceReferences`. It does not set final review decisions or permanent identifiers.
+
+The implemented extraction-proposal schema uses `additionalProperties: false` and rejects `id` or `status` if they appear in model output. It also limits one response to 200 proposals. After structural JSON Schema validation, backend semantic checks validate date precision, calendar values, time zones, and source-locator syntax.
 
 After receiving the structured response, the backend:
 

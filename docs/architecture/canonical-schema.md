@@ -1,12 +1,21 @@
 # Threadline canonical context schema
 
-> Status: **implemented as an MVP specification**. The application skeleton is **in progress**; runtime schema validation remains **planned**.
+> Status: **implemented as an MVP specification and backend runtime validator**. Application integration remains **in progress**.
 
 ## Purpose
 
 This document defines the canonical intermediate and final representation of one context entry extracted from an imported conversation. The same entry shape is used between backend processing, frontend review, and final JSON export.
 
 The schema is intentionally small. It preserves the information needed for categorization, human review, dates, and source traceability without introducing a permanent memory system.
+
+## Runtime contracts
+
+The backend implements this specification as TypeScript types, JSON Schema, and Ajv-backed runtime validation. Two related documents are deliberately separate:
+
+- The canonical Threadline document includes `schemaVersion`, backend-assigned `id` values, and review `status` values.
+- The extraction proposal contains only `type`, `content`, `date`, and `sourceReferences`. GPT-5.6 will not be allowed to assign identifiers or review states.
+
+Runtime validation rejects unknown properties, invalid enums, duplicate entry identifiers, inconsistent normalized dates, unrecognized time zones, malformed JSON Pointers, and invalid Markdown line ranges. Locator syntax can be validated without source content; confirming that a locator actually exists remains part of the future extraction request lifecycle.
 
 ## Root export document
 
@@ -73,7 +82,7 @@ The date object has four fields:
 | `precision` | enum string | The precision supported by the evidence: `minute`, `hour`, `day`, `month`, `year`, or `unknown`. |
 | `timezone` | string or `null` | An explicit IANA time-zone name such as `Europe/Madrid`, or `null` when the source does not establish a time zone. |
 
-Normalized values use ISO-like local date-time forms appropriate to their precision: `YYYY-MM-DDTHH:MM` for `minute`, `YYYY-MM-DDTHH` for `hour`, `YYYY-MM-DD` for `day`, `YYYY-MM` for `month`, and `YYYY` for `year`. The MVP does not infer missing components, resolve relative expressions without evidence, or assume UTC. A normalized time without an explicit source time zone remains a local wall-clock value with `timezone: null`.
+Normalized values use ISO-like local date-time forms appropriate to their precision: `YYYY-MM-DDTHH:MM` for `minute`, `YYYY-MM-DDTHH` for `hour`, `YYYY-MM-DD` for `day`, `YYYY-MM` for `month`, and `YYYY` for `year`. The runtime validator checks calendar components and requires a preserved `original` expression whenever `normalized` is present. The MVP does not infer missing components, resolve relative expressions without evidence, or assume UTC. A normalized time without an explicit source time zone remains a local wall-clock value with `timezone: null`.
 
 Examples:
 
@@ -170,7 +179,7 @@ Each reference identifies where the entry came from:
 | `file` | string | Imported filename or temporary source name. |
 | `location` | string | Verifiable source locator: an RFC 6901 JSON Pointer for JSON, or a one-based `lines START-END` range for Markdown. |
 
-The MVP requires at least one reference for every extracted entry. JSON references use pointers such as `/messages/42/content`; Markdown references use ranges such as `lines 12-15`. The backend must verify that the referenced value or line range exists. Hashes, quoted evidence, byte offsets, and source relationship graphs are intentionally out of scope.
+The MVP requires at least one reference for every extracted entry. JSON references use pointers such as `/messages/42/content`; Markdown references use ranges such as `lines 12-15`. The runtime validator checks locator syntax. During extraction, the backend must additionally verify that the referenced value or line range exists in the imported source. Hashes, quoted evidence, byte offsets, and source relationship graphs are intentionally out of scope.
 
 ## Complete fictional example
 
@@ -223,5 +232,7 @@ The following export is valid and contains no real personal data:
 ## Explicit MVP limits
 
 This is Threadline's own MVP contract. It does not implement Portable AI Memory (PAM), a PAM mapping, persistent identifiers, hashes, embeddings, semantic relationships, confidence scoring, edit history, or companion files. These can be considered only after the import, review, and export workflow is validated.
+
+One model extraction proposal is limited to 200 entries. The current runtime validator exists, but it is not connected to a live OpenAI response yet.
 
 Future compatibility with Portable AI Memory may be possible through an optional adapter or export format. That compatibility is not implemented and must not be presented as an existing feature.

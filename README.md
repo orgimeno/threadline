@@ -121,11 +121,12 @@ No `OPENAI_API_KEY` is needed yet because no OpenAI call has been implemented. W
 | --- | --- | --- |
 | Product and architecture documentation | implemented | This documentation foundation is complete for the current phase. |
 | Fictional examples | implemented | Reference input and output files are included. |
-| Canonical entry schema | implemented | The MVP contract is documented; runtime validation remains planned. |
+| Canonical entry schema | implemented | TypeScript types, JSON Schema, and runtime structural and semantic validation exist. |
+| Model proposal schema | implemented | The bounded proposal excludes backend-owned `id` and `status`; no live model call exists yet. |
 | Frontend import flow | in progress | File selection, multipart submission, loading/error states, and per-file validation results are connected. Extraction remains planned. |
 | Backend import boundary | in progress | Multipart limits, UTF-8 decoding, extension checks, JSON syntax validation, and per-file results are implemented. Extraction remains planned. |
 | Automated checks | implemented | Frontend component tests, backend route tests, type checking, and production builds run through root npm scripts. |
 | Live OpenAI call | planned | It requires a backend, schema, and secure configuration. |
 | Review and export | planned | They require an interface and temporary session state. |
 
-The next step is a manual end-to-end review in the browser and with an HTTP client such as `curl` or Postman. After that validation, the next implementation block is the runtime extraction schema and bounded OpenAI request preparation. The extraction prompt, retries, and evaluations remain deliberate decisions before the live integration.
+The next step is a manual end-to-end review in the browser and with an HTTP client such as `curl` or Postman. After that validation, the next implementation block is bounded OpenAI request preparation using the implemented extraction-proposal schema. The extraction prompt, retries, and evaluations remain deliberate decisions before the live integration.

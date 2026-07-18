@@ -127,3 +127,12 @@ This log records product and technical decisions. Valid statuses are `planned`, 
 - **Reason:** this completes the first real browser-to-backend flow with no unnecessary dependencies. The proxy keeps local development simple while leaving production routing open until deployment is chosen.
 - **Codex contribution:** implemented the import client, proxy configuration, loading and retry behavior, total and partial validation result views, safe backend-unreachable handling, and automated client and component tests.
 - **Pending:** perform a manual browser and HTTP-client review, then define the runtime extraction schema and OpenAI request preparation without yet enabling irreversible review or export behavior.
+
+## 2026-07-18 — Implement canonical and extraction-proposal runtime schemas
+
+- **Problem/question:** How can Threadline validate future model output without letting GPT-5.6 assign identifiers or review decisions?
+- **Options considered:** trust TypeScript types only; use one schema containing every canonical field; define separate runtime contracts for model proposals and backend-owned canonical documents.
+- **Decision:** define shared TypeScript domain types plus two strict JSON Schema documents. The extraction proposal contains `type`, `content`, `date`, and `sourceReferences`, while the canonical document adds backend-owned `id`, `status`, and `schemaVersion`. Ajv handles structural validation, followed by semantic checks for real calendar values, precision, original date evidence, recognized time zones, unique identifiers, and locator syntax.
+- **Reason:** external model output is untrusted at runtime. Separating proposal fields from backend-owned fields preserves the human-review boundary and makes the future structured-output request explicit and testable.
+- **Codex contribution:** implemented the domain types, reusable schemas, validators, empty canonical export factory, and tests covering valid documents, invalid dates, invalid provenance, duplicate identifiers, unknown states, and model attempts to set backend-owned fields.
+- **Pending:** manually review the current import flow, then prepare bounded source payloads and the extraction instruction before enabling the OpenAI call.

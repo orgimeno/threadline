@@ -1,5 +1,6 @@
 import type { FastifyPluginAsync } from 'fastify'
 
+import { emptyThreadlineDocument } from '../domain/threadline-schema.js'
 import { httpError } from '../http-error.js'
 
 interface ExportQuery {
@@ -9,10 +10,7 @@ interface ExportQuery {
 export const exportRoutes: FastifyPluginAsync = async (app) => {
   app.get<{ Querystring: ExportQuery }>('/export', async (request, reply) => {
     if (request.query.format === 'json') {
-      return reply.send({
-        schemaVersion: 'threadline.v1',
-        entries: [],
-      })
+      return reply.send(emptyThreadlineDocument())
     }
 
     if (request.query.format === 'markdown') {

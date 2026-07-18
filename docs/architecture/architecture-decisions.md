@@ -39,6 +39,8 @@ The backend will use the OpenAI Responses API with `gpt-5.6`. It will request st
 
 The key will be read only by the backend process through an environment variable. It will not be exposed in client code, example files, API responses, or the repository.
 
+Before the live model call, the backend now defines separate JSON Schema contracts for model proposals and canonical Threadline documents. Ajv performs runtime structural validation, followed by deterministic checks for dates, time zones, unique identifiers, and locator syntax. The proposal schema excludes backend-owned `id` and `status` fields.
+
 ## Parsing boundary and AI responsibility
 
 The backend performs only deterministic technical checks before the model call: file size and type limits, readable UTF-8 text encoding, non-empty content, and JSON syntax parsing for `.json` files. Markdown is treated as readable text and does not need to match a fixed structure. These checks are now implemented. The backend preserves filenames and source metadata but does not require ChatGPT, Gemini, Claude, or another provider's export layout.
