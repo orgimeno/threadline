@@ -1,0 +1,30 @@
+{
+  "name": "threadline",
+  "version": "0.1.0",
+  "description": "Traceable context compiler for AI conversations.",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/orgimeno/threadline.git"
+  },
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/orgimeno/threadline/issues"
+  },
+  "homepage": "https://github.com/orgimeno/threadline#readme",
+  "private": true,
+  "engines": {
+    "node": ">=22 <23",
+    "npm": ">=10"
+  },
+  "scripts": {
+    "dev:frontend": "npm run dev --workspace @threadline/frontend",
+    "dev:backend": "npm run dev --workspace @threadline/backend",
+    "build": "npm run build --workspaces --if-present",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "test": "npm test --workspaces --if-present"
+  },
+  "workspaces": [
+    "frontend",
+    "backend"
+  ]
+}

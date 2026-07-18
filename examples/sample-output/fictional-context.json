@@ -1,60 +1,79 @@
 {
-  "schema_version": "0.1",
-  "project": "North Star",
-  "generated_from": [
-    "fictional-project-notes.md",
-    "fictional-preferences.json"
-  ],
+  "schemaVersion": "threadline.v1",
   "entries": [
     {
-      "id": "ctx_001",
-      "category": "communication_preference",
+      "id": "entry-001",
+      "type": "preference",
       "content": "Project communication should be concise and in English.",
+      "date": {
+        "original": null,
+        "normalized": null,
+        "precision": "unknown",
+        "timezone": null
+      },
       "status": "accepted",
-      "sources": [
+      "sourceReferences": [
         {
           "file": "fictional-project-notes.md",
-          "locator": "paragraph 3"
+          "location": "lines 9-9"
         }
       ]
     },
     {
-      "id": "ctx_002",
-      "category": "milestone",
+      "id": "entry-002",
+      "type": "event",
       "content": "The first demonstration is planned for September 14, 2031.",
+      "date": {
+        "original": "September 14, 2031",
+        "normalized": "2031-09-14",
+        "precision": "day",
+        "timezone": null
+      },
       "status": "accepted",
-      "sources": [
+      "sourceReferences": [
         {
           "file": "fictional-project-notes.md",
-          "locator": "paragraph 3"
+          "location": "lines 9-9"
         },
         {
           "file": "fictional-preferences.json",
-          "locator": "messages[2]"
+          "location": "/messages/2/content"
         }
       ]
     },
     {
-      "id": "ctx_003",
-      "category": "accessibility_requirement",
+      "id": "entry-003",
+      "type": "instruction",
       "content": "Images must include alternative text and the interface must maintain sufficient contrast.",
+      "date": {
+        "original": null,
+        "normalized": null,
+        "precision": "unknown",
+        "timezone": null
+      },
       "status": "edited",
-      "sources": [
+      "sourceReferences": [
         {
           "file": "fictional-preferences.json",
-          "locator": "messages[0]"
+          "location": "/messages/0/content"
         }
       ]
     },
     {
-      "id": "ctx_004",
-      "category": "reporting_preference",
+      "id": "entry-004",
+      "type": "preference",
       "content": "Weekly reports will be written in Markdown.",
+      "date": {
+        "original": null,
+        "normalized": null,
+        "precision": "unknown",
+        "timezone": null
+      },
       "status": "accepted",
-      "sources": [
+      "sourceReferences": [
         {
           "file": "fictional-preferences.json",
-          "locator": "messages[2]"
+          "location": "/messages/2/content"
         }
       ]
     }

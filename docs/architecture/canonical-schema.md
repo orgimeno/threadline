@@ -1,6 +1,6 @@
 # Threadline canonical context schema
 
-> Status: **implemented as an MVP specification**. Runtime validation and application code remain **planned**.
+> Status: **implemented as an MVP specification**. The application skeleton is **in progress**; runtime schema validation remains **planned**.
 
 ## Purpose
 
@@ -140,11 +140,11 @@ These three small examples cover the MVP cases we want to validate before design
   "sourceReferences": [
     {
       "file": "fictional-project-notes.md",
-      "location": "paragraph 3"
+      "location": "lines 9-9"
     },
     {
       "file": "fictional-preferences.json",
-      "location": "messages[2]"
+      "location": "/messages/2/content"
     }
   ]
 }
@@ -168,9 +168,9 @@ Each reference identifies where the entry came from:
 | Field | Type | Meaning |
 | --- | --- | --- |
 | `file` | string | Imported filename or temporary source name. |
-| `location` | string | Human-readable locator, such as `messages[42]` or `paragraph 3`. |
+| `location` | string | Verifiable source locator: an RFC 6901 JSON Pointer for JSON, or a one-based `lines START-END` range for Markdown. |
 
-The MVP requires at least one reference for every extracted entry. Hashes, quoted evidence, byte offsets, and source relationship graphs are intentionally out of scope.
+The MVP requires at least one reference for every extracted entry. JSON references use pointers such as `/messages/42/content`; Markdown references use ranges such as `lines 12-15`. The backend must verify that the referenced value or line range exists. Hashes, quoted evidence, byte offsets, and source relationship graphs are intentionally out of scope.
 
 ## Complete fictional example
 
@@ -194,7 +194,7 @@ The following export is valid and contains no real personal data:
       "sourceReferences": [
         {
           "file": "fictional-project-notes.md",
-          "location": "paragraph 3"
+          "location": "lines 9-9"
         }
       ]
     },
@@ -212,7 +212,7 @@ The following export is valid and contains no real personal data:
       "sourceReferences": [
         {
           "file": "fictional-preferences.json",
-          "location": "messages[2]"
+          "location": "/messages/2/content"
         }
       ]
     }

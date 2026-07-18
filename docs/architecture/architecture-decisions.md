@@ -1,29 +1,29 @@
 # Initial architecture decisions
 
-> Status: **implemented as documentation**; the application architecture remains **planned**.
+> Status: **in progress**. The frontend and backend skeletons now implement the selected framework structure; import, session state, review, export, and OpenAI processing remain incomplete.
 
 ## Summary
 
 | Area | Decision | Status |
 | --- | --- | --- |
-| Frontend | Vue 3, Vite, and TypeScript | planned |
-| Backend | Node.js, Fastify, and TypeScript | planned |
-| Communication | REST API | planned |
+| Frontend | Vue 3, Vite, and TypeScript | in progress |
+| Backend | Node.js, Fastify, and TypeScript | in progress |
+| Communication | REST API | in progress |
 | Input | `multipart/form-data` | planned |
 | AI | OpenAI Responses API and GPT-5.6 | planned |
 | Persistence | None in the MVP | planned |
 | State | Temporary for the active session | planned |
-| Output | JSON and Markdown | planned |
+| Output | JSON and Markdown | in progress |
 | OpenAI API key | Backend only | planned |
 | Docker | Optional when it does not complicate the MVP | planned |
 
 ## Frontend: Vue 3, Vite, and TypeScript
 
-The interface will be a Vue 3 SPA created with Vite and TypeScript. Its main responsibilities are selecting files, showing processing progress, and supporting individual entry review. The frontend will not handle credentials or call OpenAI directly.
+The interface is a Vue 3 SPA created with Vite and TypeScript. Its current shell supports local file selection and displays the planned workflow. Its next responsibilities are sending files, showing processing results, and supporting individual entry review. The frontend will not handle credentials or call OpenAI directly.
 
 ## Backend: Node.js, Fastify, and TypeScript
 
-The backend will receive files, detect and validate their format, normalize content, prepare model requests, and validate model responses. Fastify is selected as a lightweight HTTP server with suitable route and validation support. TypeScript can share type models with the frontend once code exists.
+The backend skeleton uses a Fastify application factory with independently tested routes. It will receive files, detect and validate their format, prepare model requests, and validate model responses. Fastify is selected as a lightweight HTTP server with suitable route and validation support. Shared runtime models may be introduced after the first concrete validation boundary exists.
 
 ## Communication and input
 
@@ -59,7 +59,7 @@ Docker is not required for the first implementation. It can be added for reprodu
 
 ## Consequences and pending decisions
 
-- The canonical entry schema must be defined before importers are built.
-- File limits, chunking, and retry behavior must be decided before the live model call is integrated.
+- The canonical entry schema and source-location rules are defined; runtime schemas remain to be implemented.
+- Initial file and request limits are defined; chunking details and retry behavior must be decided before the live model call is integrated.
 - The lack of persistence reduces complexity, but requires a clear notice about session lifetime.
 - Provider-specific export formats are a future evolution; the MVP accepts generic JSON and Markdown.

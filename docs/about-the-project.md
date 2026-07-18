@@ -32,13 +32,14 @@ A simplified entry may look like this:
   "date": {
     "original": "March 2026",
     "normalized": "2026-03",
-    "precision": "month"
+    "precision": "month",
+    "timezone": null
   },
   "status": "pending",
   "sourceReferences": [
     {
       "file": "conversation-01.json",
-      "location": "message-42"
+      "location": "/messages/42/content"
     }
   ]
 }

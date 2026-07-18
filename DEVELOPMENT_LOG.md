@@ -100,3 +100,12 @@ This log records product and technical decisions. Valid statuses are `planned`, 
 - **Reason:** this preserves the product's general-input promise without giving up traceability or relying on the model to make final state decisions.
 - **Codex contribution:** selected a provider-neutral locator strategy and documented the model input boundary, output responsibility, and privacy disclosure.
 - **Pending:** create the application skeleton and translate these contracts into runtime types and validation.
+
+## 2026-07-18 — Create the first executable application skeleton
+
+- **Problem/question:** How can implementation begin without prematurely coupling file upload, review state, and OpenAI extraction?
+- **Options considered:** implement the entire vertical slice immediately; create independent frontend and backend repositories; create a small npm workspace with explicit unimplemented boundaries.
+- **Decision:** use one npm workspace with `frontend` and `backend` packages on Node.js 22. The frontend provides the first Vue application shell and local file selection. The backend uses a Fastify application factory, a health route, placeholder import and review routes, and empty export responses. Import and review placeholders return explicit `501 Not Implemented` responses rather than simulating finished behavior.
+- **Reason:** the workspace can now be run, tested, and extended one boundary at a time while preserving the documented contracts and truthful implementation status.
+- **Codex contribution:** created the package structure, application shells, route and component tests, root development commands, and current-state documentation; then verified type checking, tests, and production builds.
+- **Pending:** implement multipart parsing and technical source validation without calling OpenAI, then define temporary session state before enabling review mutations and real exports.

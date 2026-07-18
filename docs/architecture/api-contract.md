@@ -1,6 +1,6 @@
 # Threadline API contract (initial)
 
-> Status: **planned**. This document describes the first REST boundary; no routes or application code exist yet.
+> Status: **in progress**. The route skeleton exists, but import processing, review state, and real session exports are not implemented yet.
 
 ## Purpose
 
@@ -98,7 +98,7 @@ The backend does not return a final approved context from this endpoint. Human r
       "sourceReferences": [
         {
           "file": "conversation-01.json",
-          "location": "messages[2]"
+          "location": "/messages/2/content"
         }
       ]
     }
@@ -136,7 +136,7 @@ If the request itself is invalid or no source can be processed, the backend retu
 - `502 Bad Gateway`: OpenAI is unavailable or returns a response that fails backend validation.
 - `503 Service Unavailable`: the temporary session processor is unavailable.
 
-The exact error envelope is intentionally pending until the backend framework and validation library are chosen.
+The route skeleton uses the shared `{ "error": { "code", "message" } }` envelope for request-level errors. Endpoint-specific runtime schemas and safe diagnostic fields will be finalized when multipart validation is implemented.
 
 ### `GET /export?format=json`
 
@@ -216,7 +216,7 @@ Rules:
 - `404 Not Found`: no entry with that `id` exists in the current session.
 - `409 Conflict`: the entry changed between the frontend read and this update.
 
-The exact error envelope is intentionally pending until the backend framework and validation library are chosen.
+The route skeleton uses the shared `{ "error": { "code", "message" } }` envelope. Runtime validation details remain pending until temporary review state is implemented.
 
 ## Does this cover every user action?
 

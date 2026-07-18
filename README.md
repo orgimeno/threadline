@@ -1,6 +1,6 @@
 # Threadline
 
-> Project status: **planned**. This branch contains the documentation foundation and fictional examples; the application has not been implemented yet.
+> Project status: **in progress**. The repository now contains a tested frontend and backend skeleton. Import processing, the review workflow, session state, and the OpenAI integration remain planned.
 
 Threadline is a web application that turns unstructured exports of AI conversations into structured, traceable context that a person can review.
 
@@ -33,7 +33,7 @@ The MVP includes the web application, multi-file JSON and Markdown import, per-s
 
 It does not include user accounts, authentication, a permanent database, direct provider integrations, automatic synchronization, a native mobile app, offline PWA support, a vector database, advanced semantic search, or topic-specific subcontexts. See [docs/product/mvp-scope.md](docs/product/mvp-scope.md) for the full boundary.
 
-## Planned architecture
+## Architecture
 
 ```text
 Vue 3 + Vite + TypeScript
@@ -57,13 +57,13 @@ The backend will call the Responses API with `gpt-5.6` and a structured-output s
 
 This design uses the GPT-5.6 family's support for the Responses API and structured outputs, but remains **planned** until it is implemented and tested. See the [GPT-5.6 model documentation](https://developers.openai.com/api/docs/models/gpt-5.6-sol).
 
-## Proposed stack
+## Stack
 
 | Layer | Technology | Status |
 | --- | --- | --- |
-| Frontend | Vue 3, Vite, and TypeScript | planned |
-| Backend | Node.js, Fastify, and TypeScript | planned |
-| API | REST with `multipart/form-data` for imports | planned |
+| Frontend | Vue 3, Vite, and TypeScript | in progress |
+| Backend | Node.js, Fastify, and TypeScript | in progress |
+| API | REST with `multipart/form-data` for imports | in progress |
 | AI | OpenAI Responses API with GPT-5.6 | planned |
 | State | Temporary for the active session | planned |
 | Export | JSON and Markdown | planned |
@@ -77,9 +77,43 @@ Codex helped inspect the repository, define the MVP boundary, document the first
 
 The files in [examples/sample-input](examples/sample-input) and [examples/sample-output](examples/sample-output) are entirely fictional. They contain no real conversation exports or personal data, and illustrate mixed input and consolidated final context.
 
-## Running the project when code exists
+## Running the current skeleton
 
-There is no runnable application code or installed dependency yet. Once the frontend and backend exist, this section will document prerequisites, environment variables (including `OPENAI_API_KEY` for the backend only), and development commands. Those commands must not be assumed to exist today.
+Prerequisites:
+
+- Node.js 22 (the repository includes an `.nvmrc` file)
+- npm 10 or later
+
+Install both workspaces from the repository root:
+
+```bash
+nvm use
+npm install
+```
+
+Run the frontend and backend in separate terminals:
+
+```bash
+npm run dev:frontend
+npm run dev:backend
+```
+
+The frontend development server prints its local URL. The backend listens on `http://localhost:3000` by default and currently exposes these skeleton routes:
+
+- `GET /health` returns a service health response.
+- `POST /imports` returns `501 Not Implemented` until multipart validation and extraction exist.
+- `POST /entries/:id` returns `501 Not Implemented` until temporary review state exists.
+- `GET /export?format=json` and `GET /export?format=markdown` return empty placeholder exports.
+
+Run all current checks from the repository root:
+
+```bash
+npm run typecheck
+npm test
+npm run build
+```
+
+No `OPENAI_API_KEY` is needed yet because no OpenAI call has been implemented. When that integration is added, the key will be read by the backend only.
 
 ## Implementation status and next steps
 
@@ -88,8 +122,10 @@ There is no runnable application code or installed dependency yet. Once the fron
 | Product and architecture documentation | implemented | This documentation foundation is complete for the current phase. |
 | Fictional examples | implemented | Reference input and output files are included. |
 | Canonical entry schema | implemented | The MVP contract is documented; runtime validation remains planned. |
-| Frontend and backend | planned | They will be built after the architecture is validated. |
+| Frontend shell | in progress | The import selection, empty review queue, and disabled export controls are present; backend integration is planned. |
+| Backend skeleton | in progress | The Fastify application, health endpoint, contract placeholders, and route tests exist. |
+| Automated checks | implemented | Frontend component tests, backend route tests, type checking, and production builds run through root npm scripts. |
 | Live OpenAI call | planned | It requires a backend, schema, and secure configuration. |
 | Review and export | planned | They require an interface and temporary session state. |
 
-Before implementation begins, the team must finalize the entry schema, file and chunking limits, session-reload behavior, and the first supported input formats.
+The next implementation step is the first local import boundary: multipart parsing and technical validation for bounded JSON and Markdown uploads. It must not call OpenAI yet. The extraction prompt, model response schema, retries, and evaluations remain deliberate decisions before the live integration.
