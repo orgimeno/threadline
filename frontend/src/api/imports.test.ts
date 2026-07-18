@@ -1,0 +1,95 @@
+import { afterEach, describe, expect, it, vi } from 'vitest'
+
+import { ImportRequestError, importSources } from './imports'
+
+function jsonResponse(body: unknown, status = 200): Response {
+  return {
+    ok: status >= 200 && status < 300,
+    status,
+    json: vi.fn().mockResolvedValue(body),
+  } as unknown as Response
+}
+
+describe('importSources', () => {
+  afterEach(() => {
+    vi.unstubAllGlobals()
+  })
+
+  it('sends every selected file using the repeated files field', async () => {
+    const responseBody = {
+      importId: 'import-test',
+      sources: [
+        {
+          file: 'conversation.json',
+          format: 'json',
+          sizeBytes: 2,
+          status: 'validated',
+        },
+      ],
+      entries: [],
+      errors: [],
+    }
+    const fetchMock = vi.fn().mockResolvedValue(jsonResponse(responseBody))
+    vi.stubGlobal('fetch', fetchMock)
+    const files = [
+      new File(['{}'], 'conversation.json', { type: 'application/json' }),
+      new File(['# Notes'], 'notes.md', { type: 'text/markdown' }),
+    ]
+
+    await expect(importSources(files)).resolves.toEqual(responseBody)
+
+    expect(fetchMock).toHaveBeenCalledOnce()
+    expect(fetchMock).toHaveBeenCalledWith(
+      '/api/imports',
+      expect.objectContaining({ method: 'POST' }),
+    )
+    const request = fetchMock.mock.calls[0]?.[1] as RequestInit
+    const formData = request.body as FormData
+    expect(formData.getAll('files')).toEqual(files)
+  })
+
+  it('turns the backend error envelope into an ImportRequestError', async () => {
+    const fileError = {
+      file: 'broken.json',
+      code: 'invalid_json',
+      message: 'The file is not valid JSON and could not be processed.',
+    }
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue(
+        jsonResponse(
+          {
+            error: {
+              code: 'no_valid_sources',
+              message: 'None of the imported files passed technical validation.',
+            },
+            errors: [fileError],
+          },
+          422,
+        ),
+      ),
+    )
+
+    const request = importSources([new File(['{broken}'], 'broken.json')])
+
+    await expect(request).rejects.toMatchObject({
+      name: 'ImportRequestError',
+      status: 422,
+      code: 'no_valid_sources',
+      errors: [fileError],
+    })
+  })
+
+  it('rejects a successful HTTP response with an invalid body', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(jsonResponse({ status: 'unexpected' })))
+
+    const request = importSources([new File(['# Notes'], 'notes.md')])
+
+    await expect(request).rejects.toEqual(
+      expect.objectContaining<Partial<ImportRequestError>>({
+        code: 'invalid_import_response',
+        status: 200,
+      }),
+    )
+  })
+})

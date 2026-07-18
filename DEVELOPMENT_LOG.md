@@ -118,3 +118,12 @@ This log records product and technical decisions. Valid statuses are `planned`, 
 - **Reason:** this creates a real, testable frontend/backend boundary while keeping semantic interpretation and human-review state separate. Partial success lets one malformed source fail without discarding other valid imports.
 - **Codex contribution:** implemented the Fastify multipart boundary, pure source validation, stable request and per-file errors, request limits, and route tests for successful, partial, invalid, and oversized imports.
 - **Pending:** connect the frontend to this endpoint, display source validation results, and then define the runtime extraction schema before calling GPT-5.6.
+
+## 2026-07-18 — Connect the frontend to technical import validation
+
+- **Problem/question:** How should the Vue interface call the first backend boundary without introducing an HTTP library, global state, or a production deployment decision?
+- **Options considered:** add Axios and a state store; call Fastify directly with CORS enabled; use native `fetch` and `FormData` with a Vite development proxy.
+- **Decision:** use a small typed import client built on `fetch`, submit every selected file through the repeated `files` field, validate successful and error envelopes at runtime, and keep request state local to the application component. In development, Vite rewrites `/api/imports` to the backend `/imports` route.
+- **Reason:** this completes the first real browser-to-backend flow with no unnecessary dependencies. The proxy keeps local development simple while leaving production routing open until deployment is chosen.
+- **Codex contribution:** implemented the import client, proxy configuration, loading and retry behavior, total and partial validation result views, safe backend-unreachable handling, and automated client and component tests.
+- **Pending:** perform a manual browser and HTTP-client review, then define the runtime extraction schema and OpenAI request preparation without yet enabling irreversible review or export behavior.

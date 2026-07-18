@@ -31,6 +31,8 @@ The frontend will send multiple files through a REST API using `multipart/form-d
 
 The implemented technical boundary accepts only the multipart field `files`, with up to 10 files, 2 MiB per file, and 10 MiB per request. It accepts `.json`, `.md`, and `.markdown` filenames, requires valid UTF-8, and checks JSON syntax without requiring a provider-specific layout. MIME headers are not treated as authoritative because they are client-supplied. File contents are held only long enough to validate the request and are not written to disk or persisted.
 
+The frontend now uses the browser's native `fetch` and `FormData` APIs rather than an HTTP client dependency. It validates the response envelope at runtime and represents idle, submitting, success, partial-success, and request-error states with local Vue state. Vite proxies `/api/*` to the backend during development, avoiding a premature production CORS or deployment decision.
+
 ## AI: Responses API and GPT-5.6
 
 The backend will use the OpenAI Responses API with `gpt-5.6`. It will request structured JSON containing proposed entries and source references. Model output will never be exported directly: the backend will validate it against the canonical schema and the interface will present it in `pending` status.

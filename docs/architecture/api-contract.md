@@ -47,6 +47,8 @@ Current response example:
 
 `importId` identifies this response but is not persisted or available through a lookup route yet.
 
+The Vue development client calls `/api/imports`. Vite removes the `/api` prefix and proxies the request to the Fastify route `/imports` at `http://localhost:3000`. This is a local development concern and does not change the backend REST contract. A different frontend API base URL can be supplied through `VITE_API_BASE_URL` when needed.
+
 #### Request
 
 - Content type: `multipart/form-data`
