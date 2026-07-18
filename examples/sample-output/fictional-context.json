@@ -1,0 +1,62 @@
+{
+  "schema_version": "0.1",
+  "project": "North Star",
+  "generated_from": [
+    "fictional-project-notes.md",
+    "fictional-preferences.json"
+  ],
+  "entries": [
+    {
+      "id": "ctx_001",
+      "category": "communication_preference",
+      "content": "Project communication should be concise and in English.",
+      "status": "accepted",
+      "sources": [
+        {
+          "file": "fictional-project-notes.md",
+          "locator": "paragraph 3"
+        }
+      ]
+    },
+    {
+      "id": "ctx_002",
+      "category": "milestone",
+      "content": "The first demonstration is planned for September 14, 2031.",
+      "status": "accepted",
+      "sources": [
+        {
+          "file": "fictional-project-notes.md",
+          "locator": "paragraph 3"
+        },
+        {
+          "file": "fictional-preferences.json",
+          "locator": "messages[2]"
+        }
+      ]
+    },
+    {
+      "id": "ctx_003",
+      "category": "accessibility_requirement",
+      "content": "Images must include alternative text and the interface must maintain sufficient contrast.",
+      "status": "edited",
+      "sources": [
+        {
+          "file": "fictional-preferences.json",
+          "locator": "messages[0]"
+        }
+      ]
+    },
+    {
+      "id": "ctx_004",
+      "category": "reporting_preference",
+      "content": "Weekly reports will be written in Markdown.",
+      "status": "accepted",
+      "sources": [
+        {
+          "file": "fictional-preferences.json",
+          "locator": "messages[2]"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,55 @@
+flowchart TD
+    user([User]) --> open[Opens Threadline]
+
+    subgraph TL[Threadline]
+      direction TD
+      open --> upload[Imports multiple<br/>JSON or Markdown files]
+      upload --> frontend[Frontend]
+      frontend -->|multipart/form-data| backend[Backend]
+      backend --> validate[Validates and processes<br/>each source]
+      validate --> prepare[Normalizes content and prepares<br/>traceable source fragments]
+    end
+
+    subgraph OAI[OpenAI]
+      direction TD
+      prepare --> response[Responses API<br/>GPT-5.6]
+      response --> structured[Structured JSON<br/>with proposed entries]
+    end
+
+    subgraph TL2[Threadline]
+      direction TD
+      structured --> consolidate[Validates, normalizes, and consolidates<br/>the entries]
+      consolidate --> queue[Review queue<br/>pending]
+      queue --> decision{Entry review}
+      decision -->|Accept| accepted[accepted]
+      decision -->|Edit| edited[edited]
+      decision -->|Reject| rejected[rejected]
+      accepted --> final[Builds final context]
+      edited --> final
+      rejected --> next[Continues to the next entry]
+      next --> queue
+      final --> preview[Previews the context]
+      preview --> export[Exports JSON or Markdown]
+    end
+
+    export -. optional .-> upload
+
+    classDef user fill:#F2F4F7,stroke:#667085,color:#101828,stroke-width:1px;
+    classDef frontend fill:#EAF2FF,stroke:#3B82F6,color:#102A43,stroke-width:1px;
+    classDef backend fill:#E9F8F0,stroke:#24A26A,color:#123524,stroke-width:1px;
+    classDef openai fill:#FFF3E0,stroke:#F59E0B,color:#5F3700,stroke-width:1px;
+    classDef review fill:#F4EEFF,stroke:#8B5CF6,color:#2F1B5A,stroke-width:1px;
+    classDef final fill:#E6F7FA,stroke:#0891B2,color:#083344,stroke-width:1px;
+    classDef rejected fill:#FDECEC,stroke:#DC2626,color:#641E16,stroke-width:1px;
+
+    class user user;
+    class open,upload,frontend frontend;
+    class backend,validate,prepare,consolidate backend;
+    class response,structured openai;
+    class queue,decision,accepted,edited,next review;
+    class rejected rejected;
+    class final,preview,export final;
+
+    style TL fill:#F8FBFF,stroke:#BFDBFE,stroke-width:1px,color:#1E3A5F
+    style OAI fill:#FFFBEB,stroke:#FCD34D,stroke-width:1px,color:#78350F
+    style TL2 fill:#FAF5FF,stroke:#DDD6FE,stroke-width:1px,color:#3B1D6A

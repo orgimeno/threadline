@@ -1,0 +1,21 @@
+{
+  "export_type": "fictional-ai-conversation",
+  "title": "Fictional notes about North Star",
+  "messages": [
+    {
+      "role": "user",
+      "created_at": "2031-07-22",
+      "content": "For the North Star project, prioritize accessibility: write alternative text for images and maintain sufficient contrast."
+    },
+    {
+      "role": "assistant",
+      "created_at": "2031-07-22",
+      "content": "Understood. Is there a decision about the report format?"
+    },
+    {
+      "role": "user",
+      "created_at": "2031-07-23",
+      "content": "Weekly reports will use Markdown. The demonstration date remains September 14, 2031."
+    }
+  ]
+}

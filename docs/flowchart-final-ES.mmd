@@ -1,0 +1,68 @@
+---
+config:
+  flowchart:
+    curve: linear
+    htmlLabels: true
+---
+
+flowchart TD
+
+    %% Entrada del usuario
+    A([Usuario abre Threadline]):::user
+    B([Importa múltiples archivos<br/>JSON o Markdown]):::frontend
+    C([Frontend envía los archivos<br/>al backend]):::frontend
+
+    %% Agrupación ligera: solo rodeamos los procesos externos más importantes
+    subgraph PROCESS["Procesamiento de Threadline"]
+        D([Backend valida y lee<br/>las fuentes]):::backend
+        E([Backend prepara cada fuente<br/>para el análisis]):::backend
+        D --> E
+    end
+
+    subgraph OPENAI["OpenAI API"]
+        F([GPT-5.6 analiza las fuentes]):::openai
+        G([Devuelve JSON estructurado]):::openai
+        F --> G
+    end
+
+    %% Normalización y revisión humana
+    H([Backend valida y normaliza<br/>las respuestas]):::backend
+    I([Frontend muestra la cola<br/>de entradas]):::frontend
+    J{¿Quedan entradas<br/>pendientes?}:::decision
+    K([Mostrar una entrada]):::frontend
+    L{Decisión del usuario}:::decision
+    M([Aceptar entrada]):::accepted
+    N([Editar campos]):::frontend
+    O([Guardar como editada]):::accepted
+    P([Rechazar entrada]):::rejected
+
+    %% Resultado
+    Q([Construir contexto final<br/>con entradas aceptadas y editadas]):::backend
+    R([Mostrar previsualización]):::frontend
+    S([Exportar JSON o Markdown]):::output
+
+    A --> B --> C --> D
+    E --> F --> G --> H --> I --> J
+
+    J -->|Sí| K --> L
+    L -->|Aceptar| M --> J
+    L -->|Editar| N --> O --> J
+    L -->|Rechazar| P --> J
+
+    J -->|No| Q --> R --> S
+
+    %% El usuario puede iniciar otra revisión con un archivo nuevo o exportado
+    S -. "Nuevo ciclo opcional" .-> B
+
+    %% Clases visuales
+    classDef user fill:#f3f4f6,stroke:#6b7280,color:#111827;
+    classDef frontend fill:#dbeafe,stroke:#2563eb,color:#111827;
+    classDef backend fill:#ede9fe,stroke:#7c3aed,color:#111827;
+    classDef openai fill:#ffedd5,stroke:#ea580c,color:#111827;
+    classDef decision fill:#fef3c7,stroke:#d97706,color:#111827;
+    classDef accepted fill:#dcfce7,stroke:#16a34a,color:#166534;
+    classDef rejected fill:#fee2e2,stroke:#dc2626,color:#991b1b;
+    classDef output fill:#d1fae5,stroke:#059669,color:#065f46;
+
+    style PROCESS fill:#f5f3ff,stroke:#7c3aed,stroke-width:1px
+    style OPENAI fill:#fff7ed,stroke:#ea580c,stroke-width:1px

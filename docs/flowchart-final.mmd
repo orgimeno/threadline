@@ -1,0 +1,68 @@
+---
+config:
+  flowchart:
+    curve: linear
+    htmlLabels: true
+---
+
+flowchart TD
+
+    %% User input
+    A([User opens Threadline]):::user
+    B([Imports multiple<br/>JSON or Markdown files]):::frontend
+    C([Frontend sends files<br/>to the backend]):::frontend
+
+    %% Light grouping for the main external processes
+    subgraph PROCESS["Threadline processing"]
+        D([Backend validates and reads<br/>the sources]):::backend
+        E([Backend prepares each source<br/>for analysis]):::backend
+        D --> E
+    end
+
+    subgraph OPENAI["OpenAI API"]
+        F([GPT-5.6 analyzes the sources]):::openai
+        G([Returns structured JSON]):::openai
+        F --> G
+    end
+
+    %% Normalization and human review
+    H([Backend validates and normalizes<br/>the responses]):::backend
+    I([Frontend shows the<br/>entry queue]):::frontend
+    J{Are pending entries<br/>remaining?}:::decision
+    K([Show an entry]):::frontend
+    L{User decision}:::decision
+    M([Accept entry]):::accepted
+    N([Edit fields]):::frontend
+    O([Save as edited]):::accepted
+    P([Reject entry]):::rejected
+
+    %% Result
+    Q([Build final context<br/>with accepted and edited entries]):::backend
+    R([Show preview]):::frontend
+    S([Export JSON or Markdown]):::output
+
+    A --> B --> C --> D
+    E --> F --> G --> H --> I --> J
+
+    J -->|Yes| K --> L
+    L -->|Accept| M --> J
+    L -->|Edit| N --> O --> J
+    L -->|Reject| P --> J
+
+    J -->|No| Q --> R --> S
+
+    %% The user can start another review from a new or exported file
+    S -. "Optional new cycle" .-> B
+
+    %% Visual classes
+    classDef user fill:#f3f4f6,stroke:#6b7280,color:#111827;
+    classDef frontend fill:#dbeafe,stroke:#2563eb,color:#111827;
+    classDef backend fill:#ede9fe,stroke:#7c3aed,color:#111827;
+    classDef openai fill:#ffedd5,stroke:#ea580c,color:#111827;
+    classDef decision fill:#fef3c7,stroke:#d97706,color:#111827;
+    classDef accepted fill:#dcfce7,stroke:#16a34a,color:#166534;
+    classDef rejected fill:#fee2e2,stroke:#dc2626,color:#991b1b;
+    classDef output fill:#d1fae5,stroke:#059669,color:#065f46;
+
+    style PROCESS fill:#f5f3ff,stroke:#7c3aed,stroke-width:1px
+    style OPENAI fill:#fff7ed,stroke:#ea580c,stroke-width:1px

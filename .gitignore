@@ -141,3 +141,6 @@ dist
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
 .vite/
+
+# Windows download-zone metadata (may contain external URLs)
+*:Zone.Identifier
