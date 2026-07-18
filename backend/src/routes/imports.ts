@@ -7,6 +7,7 @@ import {
   IMPORT_LIMITS,
   type SourceValidationError,
   type ValidatedSource,
+  validatedSourceSummary,
   validateSource,
 } from '../import/source-validation.js'
 
@@ -119,7 +120,7 @@ export const importRoutes: FastifyPluginAsync = async (app) => {
 
     return reply.send({
       importId: `import-${randomUUID()}`,
-      sources,
+      sources: sources.map(validatedSourceSummary),
       entries: [],
       errors,
     })

@@ -8,11 +8,15 @@ export const IMPORT_LIMITS = {
 
 export type SourceFormat = 'json' | 'markdown'
 
-export interface ValidatedSource {
+export interface ValidatedSourceSummary {
   file: string
   format: SourceFormat
   sizeBytes: number
   status: 'validated'
+}
+
+export interface ValidatedSource extends ValidatedSourceSummary {
+  content: string
 }
 
 export interface SourceValidationError {
@@ -117,6 +121,16 @@ export function validateSource(
       format,
       sizeBytes: buffer.byteLength,
       status: 'validated',
+      content,
     },
+  }
+}
+
+export function validatedSourceSummary(source: ValidatedSource): ValidatedSourceSummary {
+  return {
+    file: source.file,
+    format: source.format,
+    sizeBytes: source.sizeBytes,
+    status: source.status,
   }
 }

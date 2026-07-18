@@ -1,6 +1,6 @@
 # Threadline extraction contract
 
-> Status: **in progress**. The model-output JSON Schema and runtime validator exist; prompt construction and the OpenAI API call remain **planned**.
+> Status: **in progress**. The model-output JSON Schema, runtime validator, extraction instruction, and per-source request preparation exist; the OpenAI API call remains **planned**.
 
 ## Purpose
 
@@ -28,6 +28,8 @@ The backend does not implement ChatGPT, Gemini, Claude, or other provider adapte
 
 Using JSON Pointer is a generic traversal rule, not a semantic interpretation of a provider's export format. The backend can verify that a returned pointer exists in the imported JSON.
 
+The current request preparer preserves the validated JSON text and declares `json-pointer` as its locator strategy. It does not flatten the provider structure or rewrite the conversation.
+
 ### Markdown sources
 
 1. Read the file as UTF-8 text.
@@ -36,6 +38,8 @@ Using JSON Pointer is a generic traversal rule, not a semantic interpretation of
 4. Require source references in the form `lines 12-15`.
 
 The backend can verify that a returned line range exists. Markdown headings, sections, and prose remain the model's semantic interpretation task.
+
+The current request preparer prefixes Markdown lines with stable one-based numbers such as `12 | content` and declares `markdown-line-range` as its locator strategy. The prefix is request metadata; it does not change the imported source stored for the active request.
 
 ## Model input boundary
 
@@ -53,6 +57,8 @@ The extraction instruction must require GPT-5.6 to:
 - return structured JSON only, using the response schema chosen by the backend.
 
 The request must not enable tools. Threadline needs structured extraction, not web search, external access, or autonomous actions.
+
+The implemented preparer creates one request envelope per validated source. Each envelope contains the fixed extraction instruction, strict proposal schema, filename, source format, locator strategy, deterministic request-local source identifier, and delimited source content. Processing remains sequential as decided for the MVP. A future OpenAI adapter will translate this internal envelope to the Responses API without exposing the API key or source content to the frontend.
 
 ## Model output and backend completion
 
@@ -77,4 +83,4 @@ Imported source content is sent from the Threadline backend to the OpenAI API fo
 
 ## Explicit MVP limits
 
-This contract does not define provider-specific adapters, automatic repair of malformed JSON, duplicate merging, contradiction resolution, prompt versioning, evaluation datasets, persistent source storage, or PAM compatibility. Those decisions can follow after the first end-to-end flow is working.
+This contract does not define provider-specific adapters, automatic repair of malformed JSON, duplicate merging, contradiction resolution, prompt versioning, evaluation datasets, persistent source storage, or PAM compatibility. Token-aware chunking is also still pending; the current preparer relies only on the 2 MiB per-source import bound and must not be connected to a live model until a practical model-input budget is added. Those decisions can follow after the first end-to-end flow is working.

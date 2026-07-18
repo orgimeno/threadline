@@ -136,3 +136,12 @@ This log records product and technical decisions. Valid statuses are `planned`, 
 - **Reason:** external model output is untrusted at runtime. Separating proposal fields from backend-owned fields preserves the human-review boundary and makes the future structured-output request explicit and testable.
 - **Codex contribution:** implemented the domain types, reusable schemas, validators, empty canonical export factory, and tests covering valid documents, invalid dates, invalid provenance, duplicate identifiers, unknown states, and model attempts to set backend-owned fields.
 - **Pending:** manually review the current import flow, then prepare bounded source payloads and the extraction instruction before enabling the OpenAI call.
+
+## 2026-07-18 — Prepare extraction requests without calling OpenAI
+
+- **Problem/question:** How should validated source text cross the future model boundary without leaking it to the frontend or losing generic provenance?
+- **Options considered:** return decoded content to the browser; combine every source into one prompt; prepare one backend-only extraction envelope per validated source.
+- **Decision:** retain decoded content only inside the backend request lifecycle and prepare one deterministic envelope per source. JSON text remains unchanged with a `json-pointer` locator strategy; Markdown receives one-based display line numbers with a `markdown-line-range` strategy. Every envelope carries the fixed untrusted-data instruction and strict extraction-proposal schema.
+- **Reason:** per-source envelopes preserve filenames and locator semantics, keep processing sequential, isolate prompt-injection defenses from imported content, and prevent private conversation text from entering technical validation responses.
+- **Codex contribution:** separated internal validated content from public source summaries, implemented extraction request preparation and Markdown line numbering, and added tests for deterministic source identifiers, strict schema attachment, instruction boundaries, and absence of source content in HTTP responses.
+- **Pending:** choose and implement a token-aware chunking budget, translate envelopes to the OpenAI Responses API, add retries and evaluations, and perform the planned manual browser and HTTP-client review.

@@ -134,6 +134,9 @@ describe('Threadline backend skeleton', () => {
       entries: [],
       errors: [],
     })
+    expect(response.json().sources.every((source: Record<string, unknown>) => !('content' in source))).toBe(
+      true,
+    )
     expect(response.json().importId).toMatch(/^import-/)
   })
 

@@ -47,6 +47,8 @@ The backend performs only deterministic technical checks before the model call: 
 
 GPT-5.6 is responsible for semantic interpretation of heterogeneous source content. It identifies useful messages or passages, classifies context, normalizes dates when evidence supports it, and returns entries that match Threadline's canonical schema. The backend then validates the model response and verifies its source references before the frontend shows the entries as `pending`.
 
+Validated content now remains available only inside the backend request lifecycle. The extraction preparer creates one internal envelope per source: original JSON text with a JSON Pointer strategy, or Markdown text annotated with one-based line numbers. Public validation responses contain only source summaries and never include conversation content. Token-aware chunking remains required before live model integration.
+
 Malformed JSON is reported per file with a stable error code and human-readable reason. Threadline does not silently repair malformed JSON through the model, because doing so could break provenance. Automatic repair may be considered as a separate, explicitly reviewed feature later.
 
 For generic provenance, valid JSON uses JSON Pointer locations and Markdown uses one-based line ranges. This generic source map is deliberately different from a provider-specific import adapter. The model proposes source references; the backend verifies them, then assigns temporary entry identifiers and `pending` status.
