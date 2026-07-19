@@ -4,6 +4,29 @@
 
 Threadline is a web application that turns unstructured exports of AI conversations into structured, traceable context that a person can review.
 
+## Judge quick start
+
+Threadline can be evaluated without an OpenAI API key or paid account. From the repository root:
+
+```bash
+nvm use
+npm install
+cp backend/.env.example backend/.env
+```
+
+Set `DEMO_MODE=true` in `backend/.env`, then run the frontend and backend in separate terminals:
+
+```bash
+npm run dev:backend
+npm run dev:frontend
+```
+
+Open the frontend URL, import either fictional file in `examples/sample-input`, review the generated demo proposal, and export JSON or Markdown. Demo mode is deterministic and never contacts OpenAI. Set `DEMO_MODE=false` and add `OPENAI_API_KEY` to use the live GPT-5.6 Terra extraction path.
+
+## Hackathon implementation
+
+Threadline fits the **Apps for Your Life** track: it makes a person's useful AI context portable without removing their control. Codex accelerated the product definition, architecture, schemas, test coverage, review interface, and documentation; dated decisions and implementation milestones are recorded in `DEVELOPMENT_LOG.md`. GPT-5.6 Terra performs the live, structured interpretation of heterogeneous JSON and Markdown sources. The backend—not the model—validates output, assigns review state, verifies source locators, and constructs exports.
+
 ## The problem
 
 Useful personal context is often spread across conversations exported from ChatGPT, Gemini, Claude, and other tools. When those exports are brought together, they contain repetitions, conflicting facts, inconsistent dates, and different kinds of information. Copying that material into a new assistant is slow and makes it difficult to know where each claim came from.

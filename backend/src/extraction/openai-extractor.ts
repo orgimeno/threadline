@@ -10,6 +10,10 @@ const MAX_OUTPUT_TOKENS = 4_000
 
 export class ExtractionError extends Error {}
 
+export interface ExtractionService {
+  extract(requests: readonly PreparedExtractionRequest[]): Promise<ContextEntry[]>
+}
+
 function safeOpenAIError(error: unknown): string {
   if (typeof error === 'object' && error !== null && 'code' in error) {
     if ((error as { code?: unknown }).code === 'insufficient_quota') {

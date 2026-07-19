@@ -11,7 +11,7 @@ import {
   validateSource,
 } from '../import/source-validation.js'
 import { prepareExtractionRequests } from '../extraction/extraction-request.js'
-import { ExtractionError, OpenAIExtractor } from '../extraction/openai-extractor.js'
+import { ExtractionError, type ExtractionService } from '../extraction/openai-extractor.js'
 import { SessionStore } from '../session/session-store.js'
 
 function contentLengthExceedsLimit(value: string | undefined): boolean {
@@ -24,7 +24,7 @@ function contentLengthExceedsLimit(value: string | undefined): boolean {
   return Number.isFinite(contentLength) && contentLength > IMPORT_LIMITS.requestSizeBytes
 }
 
-export function importRoutes(extractor?: OpenAIExtractor, sessions?: SessionStore): FastifyPluginAsync {
+export function importRoutes(extractor?: ExtractionService, sessions?: SessionStore): FastifyPluginAsync {
  return async (app) => {
   app.post('/imports', async (request, reply) => {
     if (!request.isMultipart()) {
