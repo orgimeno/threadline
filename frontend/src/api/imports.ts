@@ -14,8 +14,19 @@ export interface SourceImportError {
 export interface ImportResponse {
   importId: string
   sources: ValidatedSource[]
-  entries: unknown[]
+  entries: ContextEntry[]
   errors: SourceImportError[]
+}
+
+export type EntryStatus = 'pending' | 'accepted' | 'edited' | 'rejected'
+
+export interface ContextEntry {
+  id: string
+  type: string
+  content: string
+  status: EntryStatus
+  date: { original: string | null; normalized: string | null; precision: string; timezone: string | null }
+  sourceReferences: Array<{ file: string; location: string }>
 }
 
 export class ImportRequestError extends Error {
@@ -57,13 +68,19 @@ function isValidatedSource(value: unknown): value is ValidatedSource {
   )
 }
 
+function isContextEntry(value: unknown): value is ContextEntry {
+  return isRecord(value) && typeof value.id === 'string' && typeof value.type === 'string' &&
+    typeof value.content === 'string' && ['pending', 'accepted', 'edited', 'rejected'].includes(String(value.status)) &&
+    isRecord(value.date) && Array.isArray(value.sourceReferences)
+}
+
 function isImportResponse(value: unknown): value is ImportResponse {
   return (
     isRecord(value) &&
     typeof value.importId === 'string' &&
     Array.isArray(value.sources) &&
     value.sources.every(isValidatedSource) &&
-    Array.isArray(value.entries) &&
+    Array.isArray(value.entries) && value.entries.every(isContextEntry) &&
     Array.isArray(value.errors) &&
     value.errors.every(isSourceImportError)
   )
@@ -121,5 +138,21 @@ export async function importSources(files: readonly File[]): Promise<ImportRespo
     )
   }
 
+  return body
+}
+
+export async function reviewEntry(id: string, status: Exclude<EntryStatus, 'pending'>, content?: string): Promise<ContextEntry> {
+  const response = await fetch(`${apiBaseUrl}/entries/${encodeURIComponent(id)}`, {
+    method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ status, content }),
+  })
+  const body = await responseBody(response)
+  if (!response.ok || !isContextEntry(body)) throw requestError(response, body)
+  return body
+}
+
+export async function exportJson(): Promise<unknown> {
+  const response = await fetch(`${apiBaseUrl}/export?format=json`)
+  const body = await responseBody(response)
+  if (!response.ok) throw requestError(response, body)
   return body
 }

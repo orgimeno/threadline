@@ -4,6 +4,9 @@ import { computed, ref } from 'vue'
 import {
   ImportRequestError,
   importSources,
+  reviewEntry,
+  exportJson,
+  type ContextEntry,
   type ImportResponse,
   type SourceImportError,
 } from './api/imports'
@@ -15,6 +18,9 @@ const importState = ref<ImportState>('idle')
 const importResult = ref<ImportResponse | null>(null)
 const importError = ref<ImportRequestError | null>(null)
 const sourceInput = ref<HTMLInputElement | null>(null)
+const entries = ref<ContextEntry[]>([])
+const editedContent = ref('')
+const reviewError = ref<string | null>(null)
 
 const hasSelectedSources = computed(() => selectedFiles.value.length > 0)
 const isSubmitting = computed(() => importState.value === 'submitting')
@@ -22,6 +28,9 @@ const canSubmit = computed(() => hasSelectedSources.value && !isSubmitting.value
 const validationErrors = computed<SourceImportError[]>(
   () => importResult.value?.errors ?? importError.value?.errors ?? [],
 )
+const pendingEntry = computed(() => entries.value.find((entry) => entry.status === 'pending') ?? null)
+const pendingCount = computed(() => entries.value.filter((entry) => entry.status === 'pending').length)
+const approvedCount = computed(() => entries.value.filter((entry) => entry.status === 'accepted' || entry.status === 'edited').length)
 const importButtonLabel = computed(() => {
   if (isSubmitting.value) {
     return 'Validating sources…'
@@ -38,6 +47,7 @@ function resetImportOutcome() {
   importState.value = 'idle'
   importResult.value = null
   importError.value = null
+  reviewError.value = null
 }
 
 function handleFileSelection(event: Event) {
@@ -67,6 +77,8 @@ async function submitImport() {
 
   try {
     importResult.value = await importSources(selectedFiles.value)
+    entries.value = importResult.value.entries
+    editedContent.value = pendingEntry.value?.content ?? ''
     importState.value = 'success'
   } catch (error) {
     importError.value =
@@ -79,6 +91,23 @@ async function submitImport() {
           )
     importState.value = 'error'
   }
+}
+
+async function decide(status: 'accepted' | 'edited' | 'rejected') {
+  if (pendingEntry.value === null) return
+  reviewError.value = null
+  try {
+    const updated = await reviewEntry(pendingEntry.value.id, status, status === 'edited' ? editedContent.value : undefined)
+    entries.value = entries.value.map((entry) => entry.id === updated.id ? updated : entry)
+    editedContent.value = pendingEntry.value?.content ?? ''
+  } catch (error) { reviewError.value = error instanceof Error ? error.message : 'Could not save this review decision.' }
+}
+
+async function downloadJson() {
+  const exportDocument = await exportJson()
+  const blob = new Blob([JSON.stringify(exportDocument, null, 2)], { type: 'application/json' })
+  const link = document.createElement('a')
+  link.href = URL.createObjectURL(blob); link.download = 'threadline-context.json'; link.click(); URL.revokeObjectURL(link.href)
 }
 
 function formatFileSize(bytes: number): string {
@@ -251,15 +280,29 @@ function formatFileSize(bytes: number): string {
                 <p class="step-label">02 · Review</p>
                 <h2>Entry queue</h2>
               </div>
-              <span class="count-badge">0 pending</span>
+              <span class="count-badge">{{ pendingCount }} pending</span>
             </div>
-            <div class="empty-state">
+            <div v-if="pendingEntry === null" class="empty-state">
               <span class="empty-state-icon" aria-hidden="true">◎</span>
               <strong>No entries to review</strong>
               <p v-if="importState === 'success'">
                 Sources are validated. Context extraction is the next processing stage.
               </p>
               <p v-else>Extracted context will appear here with its source references.</p>
+            </div>
+            <div v-else class="empty-state">
+              <strong>{{ pendingEntry.type }}</strong>
+              <p>{{ pendingEntry.content }}</p>
+              <small v-for="reference in pendingEntry.sourceReferences" :key="`${reference.file}-${reference.location}`">
+                {{ reference.file }} · {{ reference.location }}
+              </small>
+              <textarea v-model="editedContent" aria-label="Edit entry content"></textarea>
+              <div class="export-actions">
+                <button type="button" @click="decide('accepted')">Accept</button>
+                <button type="button" @click="decide('edited')">Save edit</button>
+                <button type="button" @click="decide('rejected')">Reject</button>
+              </div>
+              <p v-if="reviewError" class="request-error">{{ reviewError }}</p>
             </div>
             <div class="status-legend" aria-label="Available review states">
               <span>pending</span><span>accepted</span><span>edited</span><span>rejected</span>
@@ -270,10 +313,10 @@ function formatFileSize(bytes: number): string {
             <div>
               <p class="step-label">03 · Export</p>
               <h2>Final context</h2>
-              <p>Exports include only accepted and edited entries.</p>
+              <p>{{ approvedCount }} approved entries. Exports include accepted and edited entries.</p>
             </div>
             <div class="export-actions">
-              <button type="button" disabled>Export JSON</button>
+              <button type="button" :disabled="approvedCount === 0" @click="downloadJson">Export JSON</button>
               <button type="button" disabled>Export Markdown</button>
             </div>
           </article>
