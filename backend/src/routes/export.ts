@@ -3,6 +3,7 @@ import type { FastifyPluginAsync } from 'fastify'
 import { emptyThreadlineDocument } from '../domain/threadline-schema.js'
 import { httpError } from '../http-error.js'
 import { SessionStore } from '../session/session-store.js'
+import { exportMarkdown } from '../export/markdown.js'
 
 interface ExportQuery {
   format?: string
@@ -15,9 +16,10 @@ export function exportRoutes(sessions?: SessionStore): FastifyPluginAsync { retu
     }
 
     if (request.query.format === 'markdown') {
+      const entries = sessions?.all().filter((entry) => entry.status === 'accepted' || entry.status === 'edited') ?? []
       return reply
         .type('text/markdown; charset=utf-8')
-        .send('# Threadline context\n\nNo approved entries yet.\n')
+        .send(exportMarkdown(entries))
     }
 
     return reply

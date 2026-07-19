@@ -1,6 +1,6 @@
 # Threadline
 
-> Project status: **in progress**. The frontend can now send selected files to the backend and display bounded technical validation results for multipart JSON and Markdown imports. Semantic extraction, the review workflow, session state, and the OpenAI integration remain planned.
+> Project status: **in progress**. The temporary-session MVP flow is implemented: import, bounded OpenAI extraction, human review, and JSON/Markdown export.
 
 Threadline is a web application that turns unstructured exports of AI conversations into structured, traceable context that a person can review.
 
@@ -113,7 +113,7 @@ npm test
 npm run build
 ```
 
-No `OPENAI_API_KEY` is needed yet because no OpenAI call has been implemented. When that integration is added, the key will be read by the backend only.
+Copy `backend/.env.example` to `backend/.env` and set `OPENAI_API_KEY`. The backend reads it locally and Git ignores the real `.env` file.
 
 The repeatable browser, curl, Postman, and VS Code review procedure is documented in [docs/testing/manual-import-validation.md](docs/testing/manual-import-validation.md).
 
@@ -129,7 +129,7 @@ The repeatable browser, curl, Postman, and VS Code review procedure is documente
 | Frontend import flow | in progress | File selection, multipart submission, loading/error states, and per-file validation results are connected. Extraction remains planned. |
 | Backend import boundary | in progress | Multipart limits, UTF-8 decoding, extension checks, JSON syntax validation, and per-file results are implemented. Extraction remains planned. |
 | Automated checks | implemented | Frontend component tests, backend route tests, type checking, and production builds run through root npm scripts. |
-| Live OpenAI call | planned | It requires a backend, schema, and secure configuration. |
-| Review and export | planned | They require an interface and temporary session state. |
+| Live OpenAI call | implemented | Backend-only key, bounded inputs, retry, timeout, and safe errors. |
+| Review and export | implemented | Temporary in-memory decisions and JSON/Markdown downloads. |
 
-The next step is a manual end-to-end review in the browser and with an HTTP client such as `curl` or Postman. Before any live OpenAI integration, Threadline must add a practical token-aware source budget and translate the prepared per-source envelopes to the Responses API. Model selection, retries, and evaluations remain deliberate decisions.
+The next step is a manual end-to-end review with fictional sources, then a small evaluation set and presentation polish for the hackathon.

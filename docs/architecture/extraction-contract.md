@@ -1,6 +1,6 @@
 # Threadline extraction contract
 
-> Status: **in progress**. The model-output JSON Schema, runtime validator, extraction instruction, and per-source request preparation exist; the OpenAI API call remains **planned**.
+> Status: **implemented for the MVP**. Requests use bounded source payloads, OpenAI structured output, runtime validation, and source-locator verification.
 
 ## Purpose
 
@@ -83,4 +83,4 @@ Imported source content is sent from the Threadline backend to the OpenAI API fo
 
 ## Explicit MVP limits
 
-This contract does not define provider-specific adapters, automatic repair of malformed JSON, duplicate merging, contradiction resolution, prompt versioning, evaluation datasets, persistent source storage, or PAM compatibility. Token-aware chunking is also still pending; the current preparer relies only on the 2 MiB per-source import bound and must not be connected to a live model until a practical model-input budget is added. Those decisions can follow after the first end-to-end flow is working.
+This contract does not define provider-specific adapters, automatic repair of malformed JSON, duplicate merging, contradiction resolution, prompt versioning, evaluation datasets, persistent source storage, or PAM compatibility. The MVP uses an estimated 12,000-token limit per source and 24,000 per import. Oversized sources fail safely rather than being silently truncated; richer chunking can follow after evaluation.

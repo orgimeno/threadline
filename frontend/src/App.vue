@@ -5,7 +5,7 @@ import {
   ImportRequestError,
   importSources,
   reviewEntry,
-  exportJson,
+  exportContext,
   type ContextEntry,
   type ImportResponse,
   type SourceImportError,
@@ -103,11 +103,10 @@ async function decide(status: 'accepted' | 'edited' | 'rejected') {
   } catch (error) { reviewError.value = error instanceof Error ? error.message : 'Could not save this review decision.' }
 }
 
-async function downloadJson() {
-  const exportDocument = await exportJson()
-  const blob = new Blob([JSON.stringify(exportDocument, null, 2)], { type: 'application/json' })
+async function download(format: 'json' | 'markdown') {
+  const blob = await exportContext(format)
   const link = document.createElement('a')
-  link.href = URL.createObjectURL(blob); link.download = 'threadline-context.json'; link.click(); URL.revokeObjectURL(link.href)
+  link.href = URL.createObjectURL(blob); link.download = `threadline-context.${format === 'json' ? 'json' : 'md'}`; link.click(); URL.revokeObjectURL(link.href)
 }
 
 function formatFileSize(bytes: number): string {
@@ -247,7 +246,7 @@ function formatFileSize(bytes: number): string {
             </ul>
 
             <p class="result-footnote">
-              No context entries were created. GPT-5.6 extraction is not connected yet.
+              {{ entries.length === 0 ? 'No useful context entries were found in these sources.' : `${entries.length} context entries are ready for review.` }}
             </p>
             <small class="import-id">Request {{ importResult.importId }}</small>
           </div>
@@ -316,8 +315,8 @@ function formatFileSize(bytes: number): string {
               <p>{{ approvedCount }} approved entries. Exports include accepted and edited entries.</p>
             </div>
             <div class="export-actions">
-              <button type="button" :disabled="approvedCount === 0" @click="downloadJson">Export JSON</button>
-              <button type="button" disabled>Export Markdown</button>
+              <button type="button" :disabled="approvedCount === 0" @click="download('json')">Export JSON</button>
+              <button type="button" :disabled="approvedCount === 0" @click="download('markdown')">Export Markdown</button>
             </div>
           </article>
         </div>
@@ -326,7 +325,7 @@ function formatFileSize(bytes: number): string {
 
     <footer>
       <span>Threadline MVP</span>
-      <span>Vue 3 · Fastify · GPT-5.6 planned</span>
+      <span>Vue 3 · Fastify · GPT-5.6</span>
     </footer>
   </div>
 </template>

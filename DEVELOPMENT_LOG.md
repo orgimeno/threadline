@@ -2,6 +2,13 @@
 
 This log records product and technical decisions. Valid statuses are `planned`, `in progress`, and `implemented`.
 
+## 2026-07-19 — Complete the bounded import-to-export MVP flow
+
+- **Decision:** connect bounded OpenAI extraction to a temporary in-memory review session and export approved entries as JSON or Markdown.
+- **Reason:** it completes the user-visible product loop without adding accounts, a database, background jobs, or provider-specific adapters.
+- **Implementation:** the backend enforces estimated token budgets, uses a timeout and one retry, validates structured proposals and source locators, then assigns pending entries. The Vue client supports accept, edit, reject, and both downloads.
+- **Pending:** add a small synthetic evaluation set and hackathon presentation polish.
+
 ## 2026-07-18 — Define the MVP boundary
 
 - **Problem/question:** How can mixed AI conversation exports become useful context without automating a decision that must remain human?
