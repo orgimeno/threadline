@@ -21,6 +21,8 @@ const sourceInput = ref<HTMLInputElement | null>(null)
 const entries = ref<ContextEntry[]>([])
 const editedContent = ref('')
 const reviewError = ref<string | null>(null)
+const isEditing = ref(false)
+const selectedEntryId = ref<string | null>(null)
 
 const hasSelectedSources = computed(() => selectedFiles.value.length > 0)
 const isSubmitting = computed(() => importState.value === 'submitting')
@@ -28,9 +30,11 @@ const canSubmit = computed(() => hasSelectedSources.value && !isSubmitting.value
 const validationErrors = computed<SourceImportError[]>(
   () => importResult.value?.errors ?? importError.value?.errors ?? [],
 )
-const pendingEntry = computed(() => entries.value.find((entry) => entry.status === 'pending') ?? null)
+const currentEntry = computed(() => entries.value.find((entry) => entry.id === selectedEntryId.value) ?? entries.value.find((entry) => entry.status === 'pending') ?? null)
+const currentIndex = computed(() => currentEntry.value === null ? -1 : entries.value.findIndex((entry) => entry.id === currentEntry.value?.id))
 const pendingCount = computed(() => entries.value.filter((entry) => entry.status === 'pending').length)
 const approvedCount = computed(() => entries.value.filter((entry) => entry.status === 'accepted' || entry.status === 'edited').length)
+const reviewComplete = computed(() => entries.value.length > 0 && pendingCount.value === 0)
 const importButtonLabel = computed(() => {
   if (isSubmitting.value) {
     return 'Validating sources…'
@@ -78,7 +82,9 @@ async function submitImport() {
   try {
     importResult.value = await importSources(selectedFiles.value)
     entries.value = importResult.value.entries
-    editedContent.value = pendingEntry.value?.content ?? ''
+    selectedEntryId.value = entries.value[0]?.id ?? null
+    editedContent.value = currentEntry.value?.content ?? ''
+    isEditing.value = false
     importState.value = 'success'
   } catch (error) {
     importError.value =
@@ -94,13 +100,37 @@ async function submitImport() {
 }
 
 async function decide(status: 'accepted' | 'edited' | 'rejected') {
-  if (pendingEntry.value === null) return
+  if (currentEntry.value === null) return
   reviewError.value = null
   try {
-    const updated = await reviewEntry(pendingEntry.value.id, status, status === 'edited' ? editedContent.value : undefined)
+    const updated = await reviewEntry(currentEntry.value.id, status, status === 'edited' ? editedContent.value : undefined)
     entries.value = entries.value.map((entry) => entry.id === updated.id ? updated : entry)
-    editedContent.value = pendingEntry.value?.content ?? ''
+    selectedEntryId.value = entries.value.find((entry) => entry.status === 'pending')?.id ?? updated.id
+    editedContent.value = currentEntry.value?.content ?? ''
+    isEditing.value = false
   } catch (error) { reviewError.value = error instanceof Error ? error.message : 'Could not save this review decision.' }
+}
+
+function startEditing() {
+  if (currentEntry.value !== null) editedContent.value = currentEntry.value.content
+  isEditing.value = true
+}
+
+function cancelEditing() {
+  editedContent.value = currentEntry.value?.content ?? ''
+  isEditing.value = false
+}
+
+function selectEntry(id: string) {
+  selectedEntryId.value = id
+  editedContent.value = currentEntry.value?.content ?? ''
+  isEditing.value = false
+  reviewError.value = null
+}
+
+function moveEntry(direction: -1 | 1) {
+  const next = entries.value[currentIndex.value + direction]
+  if (next !== undefined) selectEntry(next.id)
 }
 
 async function download(format: 'json' | 'markdown') {
@@ -213,7 +243,7 @@ function formatFileSize(bytes: number): string {
           >
             <div class="result-heading">
               <div>
-                <strong>Technical validation complete</strong>
+                <strong>{{ entries.length > 0 ? 'Extraction complete' : 'Technical validation complete' }}</strong>
                 <p>
                   {{ importResult.sources.length }} validated · {{ importResult.errors.length }}
                   failed
@@ -248,7 +278,6 @@ function formatFileSize(bytes: number): string {
             <p class="result-footnote">
               {{ entries.length === 0 ? 'No useful context entries were found in these sources.' : `${entries.length} context entries are ready for review.` }}
             </p>
-            <small class="import-id">Request {{ importResult.importId }}</small>
           </div>
 
           <div v-if="importState === 'error' && importError !== null" class="request-error" role="alert">
@@ -267,8 +296,7 @@ function formatFileSize(bytes: number): string {
           </div>
 
           <p class="privacy-note">
-            Files are sent only to the local Threadline backend for technical validation. OpenAI
-            is not called at this stage.
+            Files are validated by the local backend and, when valid, sent to OpenAI for structured extraction. They are kept only for this temporary session and are not stored by Threadline.
           </p>
         </article>
 
@@ -281,7 +309,7 @@ function formatFileSize(bytes: number): string {
               </div>
               <span class="count-badge">{{ pendingCount }} pending</span>
             </div>
-            <div v-if="pendingEntry === null" class="empty-state">
+            <div v-if="currentEntry === null" class="empty-state">
               <span class="empty-state-icon" aria-hidden="true">◎</span>
               <strong>No entries to review</strong>
               <p v-if="importState === 'success'">
@@ -289,19 +317,53 @@ function formatFileSize(bytes: number): string {
               </p>
               <p v-else>Extracted context will appear here with its source references.</p>
             </div>
-            <div v-else class="empty-state">
-              <strong>{{ pendingEntry.type }}</strong>
-              <p>{{ pendingEntry.content }}</p>
-              <small v-for="reference in pendingEntry.sourceReferences" :key="`${reference.file}-${reference.location}`">
-                {{ reference.file }} · {{ reference.location }}
-              </small>
-              <textarea v-model="editedContent" aria-label="Edit entry content"></textarea>
-              <div class="export-actions">
-                <button type="button" @click="decide('accepted')">Accept</button>
-                <button type="button" @click="decide('edited')">Save edit</button>
-                <button type="button" @click="decide('rejected')">Reject</button>
+            <div v-if="reviewComplete" class="review-complete">
+              <span aria-hidden="true">✓</span>
+              <div><strong>Review complete</strong><p>{{ approvedCount }} entries are ready to export.</p></div>
+            </div>
+            <div v-else-if="currentEntry !== null">
+              <div class="review-progress">
+                <span>{{ currentIndex + 1 }} of {{ entries.length }}</span>
+                <div class="progress-track"><span :style="{ width: `${((currentIndex + 1) / entries.length) * 100}%` }"></span></div>
+                <span>{{ pendingCount }} pending</span>
+              </div>
+              <div class="entry-navigator" aria-label="Recognized entries">
+                <button v-for="(entry, index) in entries" :key="entry.id" type="button" :class="['nav-entry', { active: entry.id === currentEntry.id, done: entry.status !== 'pending' }]" @click="selectEntry(entry.id)">
+                  {{ index + 1 }}
+                </button>
+              </div>
+            <div class="review-card">
+              <div class="review-card-header">
+                <span class="entry-type">{{ currentEntry.type }}</span>
+                <span class="entry-id">{{ currentEntry.id }}</span>
+              </div>
+              <p class="review-prompt">Keep this in your portable context?</p>
+              <p v-if="!isEditing" class="entry-content">{{ currentEntry.content }}</p>
+              <textarea v-else v-model="editedContent" class="entry-editor" aria-label="Edit entry content"></textarea>
+              <p class="entry-date">{{ currentEntry.date.normalized ?? currentEntry.date.original ?? 'No date supplied' }}</p>
+              <div class="evidence">
+                <span class="evidence-label">Source evidence</span>
+                <ul>
+                  <li v-for="reference in currentEntry.sourceReferences" :key="`${reference.file}-${reference.location}`">
+                    <strong>{{ reference.file }}</strong><code>{{ reference.location }}</code>
+                  </li>
+                </ul>
+              </div>
+              <div v-if="!isEditing" class="review-actions">
+                <button class="accept-action" type="button" @click="decide('accepted')">Accept</button>
+                <button class="edit-action" type="button" @click="startEditing">Edit</button>
+                <button class="reject-action" type="button" @click="decide('rejected')">Reject</button>
+              </div>
+              <div v-else class="review-actions">
+                <button class="accept-action" type="button" @click="decide('edited')">Save edit</button>
+                <button class="edit-action" type="button" @click="cancelEditing">Cancel</button>
               </div>
               <p v-if="reviewError" class="request-error">{{ reviewError }}</p>
+            </div>
+              <div class="review-pagination">
+                <button type="button" :disabled="currentIndex === 0" @click="moveEntry(-1)">← Previous</button>
+                <button type="button" :disabled="currentIndex === entries.length - 1" @click="moveEntry(1)">Next →</button>
+              </div>
             </div>
             <div class="status-legend" aria-label="Available review states">
               <span>pending</span><span>accepted</span><span>edited</span><span>rejected</span>

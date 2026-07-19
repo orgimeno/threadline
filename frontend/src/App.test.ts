@@ -89,7 +89,7 @@ describe('Threadline application shell', () => {
     expect(wrapper.text()).toContain('Technical validation complete')
     expect(wrapper.text()).toContain('1 validated · 1 failed')
     expect(wrapper.text()).toContain('invalid_json')
-    expect(wrapper.text()).toContain('GPT-5.6 extraction is not connected yet')
+    expect(wrapper.text()).toContain('sent to OpenAI for structured extraction')
   })
 
   it('shows a safe request error and allows a retry', async () => {
