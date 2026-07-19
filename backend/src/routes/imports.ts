@@ -10,6 +10,9 @@ import {
   validatedSourceSummary,
   validateSource,
 } from '../import/source-validation.js'
+import { prepareExtractionRequests } from '../extraction/extraction-request.js'
+import { ExtractionError, OpenAIExtractor } from '../extraction/openai-extractor.js'
+import { SessionStore } from '../session/session-store.js'
 
 function contentLengthExceedsLimit(value: string | undefined): boolean {
   if (value === undefined) {
@@ -21,7 +24,8 @@ function contentLengthExceedsLimit(value: string | undefined): boolean {
   return Number.isFinite(contentLength) && contentLength > IMPORT_LIMITS.requestSizeBytes
 }
 
-export const importRoutes: FastifyPluginAsync = async (app) => {
+export function importRoutes(extractor?: OpenAIExtractor, sessions?: SessionStore): FastifyPluginAsync {
+ return async (app) => {
   app.post('/imports', async (request, reply) => {
     if (!request.isMultipart()) {
       return reply
@@ -118,11 +122,22 @@ export const importRoutes: FastifyPluginAsync = async (app) => {
       })
     }
 
+    let entries: unknown[] = []
+    if (extractor !== undefined && sessions !== undefined) {
+      try {
+        entries = await extractor.extract(prepareExtractionRequests(sources))
+        sessions.replace(entries as never)
+      } catch (error) {
+        const message = error instanceof ExtractionError ? error.message : 'OpenAI could not process this import.'
+        return reply.code(502).send(httpError('extraction_failed', message))
+      }
+    }
     return reply.send({
       importId: `import-${randomUUID()}`,
       sources: sources.map(validatedSourceSummary),
-      entries: [],
+      entries,
       errors,
     })
   })
+ }
 }

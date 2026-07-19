@@ -245,10 +245,10 @@ describe('Threadline backend skeleton', () => {
     expect(response.json().error.code).toBe('request_too_large')
   })
 
-  it('exposes entry review as an explicit unimplemented boundary', async () => {
+  it('validates review decisions against the temporary session', async () => {
     const response = await app.inject({ method: 'POST', url: '/entries/entry-001' })
 
-    expect(response.statusCode).toBe(501)
-    expect(response.json().error.code).toBe('entry_review_not_implemented')
+    expect(response.statusCode).toBe(400)
+    expect(response.json().error.code).toBe('invalid_review')
   })
 })
