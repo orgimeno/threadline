@@ -74,11 +74,11 @@ Responses API + GPT-5.6
 
 Communication will use a REST API. Files and state will exist only during the initial session: the MVP has no persistent storage. The OpenAI API key will remain exclusively on the backend, never in the browser. The rationale is documented in [docs/architecture/architecture-decisions.md](docs/architecture/architecture-decisions.md).
 
-## Planned GPT-5.6 integration
+## GPT-5.6 integration
 
-The backend will call the Responses API with `gpt-5.6` and a structured-output schema. Each request will contain readable source content and source metadata; the model will interpret heterogeneous JSON or Markdown and return proposed entries, not irreversible final context. After the call, the backend will validate the schema, associate proposals with their sources, and place each proposal in `pending` status for human review.
+The backend calls the Responses API with `gpt-5.6-terra` and a structured-output schema. Each request contains readable source content and source metadata; the model returns proposals, never irreversible final context. The backend validates the schema and locators, associates proposals with sources, and places each proposal in `pending` status for human review.
 
-This design uses the GPT-5.6 family's support for the Responses API and structured outputs, but remains **planned** until it is implemented and tested. See the [GPT-5.6 model documentation](https://developers.openai.com/api/docs/models/gpt-5.6-sol).
+The live path uses bounded inputs, a 60-second timeout, one SDK retry, and safe errors. See the [GPT-5.6 model documentation](https://developers.openai.com/api/docs/models/gpt-5.6-sol).
 
 ## Stack
 
@@ -87,9 +87,9 @@ This design uses the GPT-5.6 family's support for the Responses API and structur
 | Frontend | Vue 3, Vite, and TypeScript | in progress |
 | Backend | Node.js, Fastify, and TypeScript | in progress |
 | API | REST with `multipart/form-data` for imports | in progress |
-| AI | OpenAI Responses API with GPT-5.6 | planned |
-| State | Temporary for the active session | planned |
-| Export | JSON and Markdown | planned |
+| AI | OpenAI Responses API with GPT-5.6 Terra | implemented |
+| State | Temporary in-memory session | implemented |
+| Export | JSON and Markdown | implemented |
 | Docker | Optional, only if it improves reproducibility without slowing the MVP | planned |
 
 ## How Codex contributed
@@ -124,9 +124,9 @@ npm run dev:backend
 The frontend development server prints its local URL. During local development, Vite proxies browser requests from `/api/*` to the backend at `http://localhost:3000/*`. The backend currently exposes these routes:
 
 - `GET /health` returns a service health response.
-- `POST /imports` validates bounded multipart JSON and Markdown sources and reports per-file results. It does not perform semantic extraction yet.
-- `POST /entries/:id` returns `501 Not Implemented` until temporary review state exists.
-- `GET /export?format=json` and `GET /export?format=markdown` return empty placeholder exports.
+- `POST /imports` validates sources, extracts bounded proposals, and returns pending entries.
+- `POST /entries/:id` accepts, edits, or rejects a session entry.
+- `GET /export?format=json` and `GET /export?format=markdown` export approved entries.
 
 Run all current checks from the repository root:
 
@@ -147,10 +147,10 @@ The repeatable browser, curl, Postman, and VS Code review procedure is documente
 | Product and architecture documentation | implemented | This documentation foundation is complete for the current phase. |
 | Fictional examples | implemented | Reference input and output files are included. |
 | Canonical entry schema | implemented | TypeScript types, JSON Schema, and runtime structural and semantic validation exist. |
-| Model proposal schema | implemented | The bounded proposal excludes backend-owned `id` and `status`; no live model call exists yet. |
-| Extraction request preparation | in progress | Per-source untrusted-data envelopes, locator strategies, instructions, and output schema are prepared; token-aware chunking and the OpenAI adapter remain planned. |
-| Frontend import flow | in progress | File selection, multipart submission, loading/error states, and per-file validation results are connected. Extraction remains planned. |
-| Backend import boundary | in progress | Multipart limits, UTF-8 decoding, extension checks, JSON syntax validation, and per-file results are implemented. Extraction remains planned. |
+| Model proposal schema | implemented | The bounded proposal excludes backend-owned `id` and `status`; live responses are validated. |
+| Extraction request preparation | implemented | Bounded envelopes, locator strategies, the OpenAI adapter, timeout, and retry are connected. |
+| Frontend import flow | implemented | Import, review navigator, decisions, and downloads are connected. |
+| Backend import boundary | implemented | Validation, extraction, provenance checks, and temporary session state are connected. |
 | Automated checks | implemented | Frontend component tests, backend route tests, type checking, and production builds run through root npm scripts. |
 | Live OpenAI call | implemented | Backend-only key, bounded inputs, retry, timeout, and safe errors. |
 | Review and export | implemented | Temporary in-memory decisions and JSON/Markdown downloads. |

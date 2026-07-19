@@ -1,6 +1,6 @@
 # MVP scope
 
-> Status: **planned**. This document defines the product to be built; it does not describe available functionality.
+> Status: **implemented for the local MVP**. This document remains the product boundary; evaluation and presentation work are still pending.
 
 ## Included in the MVP
 
@@ -34,4 +34,4 @@ A person can import fictional files or permitted personal files, review extracte
 
 ## Deliberate limits
 
-JSON import does not promise immediate compatibility with every export variant from every provider. The first contract will support generic JSON and Markdown. File size and count limits, long-text chunking, and error policies remain pending decisions and must not be presented as implemented.
+JSON import does not promise immediate compatibility with every export variant from every provider. The MVP supports generic JSON and Markdown with documented file limits and bounded model inputs; richer chunking remains future work.

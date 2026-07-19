@@ -2,6 +2,15 @@
 
 This log records product and technical decisions. Valid statuses are `planned`, `in progress`, and `implemented`.
 
+## 2026-07-20 — Finish the hackathon-ready MVP and judge path
+
+- **Problem/question:** What is the smallest complete product loop that remains easy to judge without sharing a private API key?
+- **Decision:** complete live bounded extraction, temporary review, JSON/Markdown export, a review navigator, and a deterministic `DEMO_MODE` that exercises the same browser-to-backend workflow without contacting OpenAI.
+- **Reason:** judges can test the product immediately, while the real path still demonstrates GPT-5.6 Terra structured extraction, provenance verification, timeout/retry behavior, and human control.
+- **Implementation:** added local `.env` loading, OpenAI quota-safe error reporting, 12k/24k estimated input budgets, one retry and 60-second timeout, in-memory review decisions, export rendering, judge quick-start documentation, and a polished review UI with progress and navigation.
+- **Verification:** typecheck, 33 automated tests, production builds, manual live extraction, review, and both export formats were run during development.
+- **Pending:** prepare a short public demo video, a small synthetic evaluation set, and Devpost submission copy/screenshots.
+
 ## 2026-07-19 — Complete the bounded import-to-export MVP flow
 
 - **Decision:** connect bounded OpenAI extraction to a temporary in-memory review session and export approved entries as JSON or Markdown.

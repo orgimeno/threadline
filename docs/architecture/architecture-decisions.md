@@ -1,6 +1,6 @@
 # Initial architecture decisions
 
-> Status: **in progress**. The framework structure and technical import validation are implemented; frontend integration, session state, review, export, and OpenAI processing remain incomplete.
+> Status: **implemented for the MVP**. The local application supports bounded extraction, temporary review, and export; deployment and evaluation remain future work.
 
 ## Summary
 
@@ -10,11 +10,11 @@
 | Backend | Node.js, Fastify, and TypeScript | in progress |
 | Communication | REST API | in progress |
 | Input | `multipart/form-data` | in progress |
-| AI | OpenAI Responses API and GPT-5.6 | planned |
+| AI | OpenAI Responses API and GPT-5.6 Terra | implemented |
 | Persistence | None in the MVP | planned |
-| State | Temporary for the active session | planned |
-| Output | JSON and Markdown | in progress |
-| OpenAI API key | Backend only | planned |
+| State | Temporary for the active session | implemented |
+| Output | JSON and Markdown | implemented |
+| OpenAI API key | Backend only | implemented |
 | Docker | Optional when it does not complicate the MVP | planned |
 
 ## Frontend: Vue 3, Vite, and TypeScript
