@@ -128,6 +128,7 @@ export function importRoutes(extractor?: OpenAIExtractor, sessions?: SessionStor
         entries = await extractor.extract(prepareExtractionRequests(sources))
         sessions.replace(entries as never)
       } catch (error) {
+        app.log.error({ err: error }, 'OpenAI extraction failed')
         const message = error instanceof ExtractionError ? error.message : 'OpenAI could not process this import.'
         return reply.code(502).send(httpError('extraction_failed', message))
       }

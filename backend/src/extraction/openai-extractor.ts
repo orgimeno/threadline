@@ -10,6 +10,15 @@ const MAX_OUTPUT_TOKENS = 4_000
 
 export class ExtractionError extends Error {}
 
+function safeOpenAIError(error: unknown): string {
+  if (typeof error === 'object' && error !== null && 'code' in error) {
+    if ((error as { code?: unknown }).code === 'insufficient_quota') {
+      return 'OpenAI API billing or credits are required before extraction can run.'
+    }
+  }
+  return 'OpenAI could not process this import. Please try again.'
+}
+
 function estimatedTokens(value: string): number {
   return Math.ceil(value.length / 4)
 }
@@ -55,7 +64,9 @@ export class OpenAIExtractor {
           max_output_tokens: MAX_OUTPUT_TOKENS,
           text: { format: { type: 'json_schema', name: request.schemaName, strict: true, schema: request.schema } },
         } as never) as { output_text: string }
-      } catch { throw new ExtractionError('OpenAI could not process this import. Please try again.') }
+      } catch (error) {
+        throw new ExtractionError(safeOpenAIError(error), { cause: error })
+      }
       let raw: unknown
       try { raw = JSON.parse(response.output_text) } catch { throw new ExtractionError('OpenAI returned an invalid structured response.') }
       const proposal = validateExtractionProposal(raw)
