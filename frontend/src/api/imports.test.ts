@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
-import { ImportRequestError, importSources, reviewEntry } from './imports'
+import { ImportRequestError, importSources, reopenReviewEntry, reviewEntry } from './imports'
 
 function jsonResponse(body: unknown, status = 200): Response {
   return {
@@ -126,5 +126,22 @@ describe('importSources', () => {
         date: responseBody.date,
       }),
     })
+  })
+
+  it('reopens a review entry with the dedicated delete route', async () => {
+    const responseBody = {
+      id: 'entry-001',
+      type: 'event',
+      content: 'Jordan started a fictional ceramics course.',
+      status: 'pending',
+      date: { original: null, normalized: null, precision: 'unknown' as const, timezone: null },
+      sourceReferences: [{ file: 'notes.md', location: 'lines 1-2' }],
+    }
+    const fetchMock = vi.fn().mockResolvedValue(jsonResponse(responseBody))
+    vi.stubGlobal('fetch', fetchMock)
+
+    await expect(reopenReviewEntry('entry-001')).resolves.toEqual(responseBody)
+
+    expect(fetchMock).toHaveBeenCalledWith('/api/entries/entry-001/review', { method: 'DELETE' })
   })
 })

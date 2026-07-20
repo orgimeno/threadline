@@ -43,4 +43,17 @@ describe('SessionStore', () => {
       status: 'edited',
     })
   })
+
+  it('reopens a reviewed entry without changing its content or evidence', () => {
+    const sessions = new SessionStore()
+    sessions.replace([{ ...entry, status: 'rejected' }])
+
+    const reopened = sessions.reopen('entry-001')
+
+    expect(reopened).toMatchObject({
+      status: 'pending',
+      content: entry.content,
+      sourceReferences: entry.sourceReferences,
+    })
+  })
 })

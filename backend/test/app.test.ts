@@ -253,4 +253,27 @@ describe('Threadline backend skeleton', () => {
     expect(response.statusCode).toBe(400)
     expect(response.json().error.code).toBe('invalid_review')
   })
+
+  it('reopens a reviewed entry in the temporary session', async () => {
+    await app.close()
+    process.env.DEMO_MODE = 'true'
+    app = buildApp()
+    const imported = await app.inject({
+      method: 'POST',
+      url: '/imports',
+      ...multipartPayload([{ filename: 'notes.md', content: '# Fictional notes' }]),
+    })
+    const id = imported.json().entries[0].id as string
+
+    const accepted = await app.inject({
+      method: 'POST',
+      url: `/entries/${id}`,
+      payload: { status: 'accepted' },
+    })
+    const reopened = await app.inject({ method: 'DELETE', url: `/entries/${id}/review` })
+
+    expect(accepted.json().status).toBe('accepted')
+    expect(reopened.statusCode).toBe(200)
+    expect(reopened.json()).toMatchObject({ id, status: 'pending' })
+  })
 })

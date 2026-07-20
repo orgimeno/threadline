@@ -39,4 +39,11 @@ export class SessionStore {
     if (status === 'edited' && update.date !== undefined) entry.date = { ...update.date }
     return cloneEntry(entry)
   }
+
+  reopen(id: string): ContextEntry | null {
+    const entry = this.entries.find((candidate) => candidate.id === id)
+    if (entry === undefined) return null
+    entry.status = 'pending'
+    return cloneEntry(entry)
+  }
 }

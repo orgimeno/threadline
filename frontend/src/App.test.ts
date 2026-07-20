@@ -5,6 +5,7 @@ import App from './App.vue'
 import {
   ImportRequestError,
   importSources,
+  reopenReviewEntry,
   reviewEntry,
   type ContextEntry,
   type ImportResponse,
@@ -16,11 +17,13 @@ vi.mock('./api/imports', async (importOriginal) => {
   return {
     ...actual,
     importSources: vi.fn(),
+    reopenReviewEntry: vi.fn(),
     reviewEntry: vi.fn(),
   }
 })
 
 const importSourcesMock = vi.mocked(importSources)
+const reopenReviewEntryMock = vi.mocked(reopenReviewEntry)
 const reviewEntryMock = vi.mocked(reviewEntry)
 
 const pendingEntry: ContextEntry = {
@@ -50,6 +53,7 @@ async function selectFiles(wrapper: VueWrapper, files: File[]) {
 describe('Threadline application shell', () => {
   beforeEach(() => {
     importSourcesMock.mockReset()
+    reopenReviewEntryMock.mockReset()
     reviewEntryMock.mockReset()
   })
 
@@ -236,5 +240,26 @@ describe('Threadline application shell', () => {
     expect(reviewEntryMock).toHaveBeenCalledWith('entry-001', 'edited', {
       content: updatedEntry.content,
     })
+  })
+
+  it('hides review actions after a decision and can reopen the entry', async () => {
+    const acceptedEntry: ContextEntry = { ...pendingEntry, status: 'accepted' }
+    importSourcesMock.mockResolvedValue({ importId: 'import-test', sources: [], entries: [acceptedEntry], errors: [] })
+    reopenReviewEntryMock.mockResolvedValue(pendingEntry)
+    const wrapper = mount(App)
+
+    await selectFiles(wrapper, [new File(['# Notes'], 'notes.md')])
+    await wrapper.get('[data-testid="import-button"]').trigger('click')
+    await flushPromises()
+
+    expect(wrapper.find('.accept-action').exists()).toBe(false)
+    expect(wrapper.find('.reject-action').exists()).toBe(false)
+    expect(wrapper.get('.reopen-review').text()).toContain('Reopen review')
+
+    await wrapper.get('.reopen-review').trigger('click')
+    await flushPromises()
+
+    expect(reopenReviewEntryMock).toHaveBeenCalledWith('entry-001')
+    expect(wrapper.find('.accept-action').exists()).toBe(true)
   })
 })

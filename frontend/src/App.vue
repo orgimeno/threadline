@@ -5,6 +5,7 @@ import {
   ImportRequestError,
   importSources,
   reviewEntry,
+  reopenReviewEntry,
   exportContext,
   type ContextEntry,
   type ImportResponse,
@@ -187,6 +188,23 @@ async function decide(status: ReviewStatus) {
     reviewError.value = error instanceof Error ? error.message : 'Could not save this review decision.'
   } finally {
     reviewFeedback.value = null
+    isReviewing.value = false
+  }
+}
+
+async function reopenReview() {
+  if (currentEntry.value === null || isReviewing.value) return
+  reviewError.value = null
+  isReviewing.value = true
+  try {
+    const updated = await reopenReviewEntry(currentEntry.value.id)
+    entries.value = entries.value.map((entry) => entry.id === updated.id ? updated : entry)
+    selectedEntryId.value = updated.id
+    setEditForm(updated)
+    isEditing.value = false
+  } catch (error) {
+    reviewError.value = error instanceof Error ? error.message : 'Could not reopen this review entry.'
+  } finally {
     isReviewing.value = false
   }
 }
@@ -422,7 +440,7 @@ function formatFileSize(bytes: number): string {
               <span aria-hidden="true">✓</span>
               <div><strong>Review complete</strong><p>{{ approvedCount }} entries are ready to export.</p></div>
             </div>
-            <div v-else-if="currentEntry !== null">
+            <div v-if="currentEntry !== null">
               <div class="review-progress">
                 <span>{{ currentIndex + 1 }} of {{ entries.length }}</span>
                 <div class="progress-track"><span :style="{ width: `${((currentIndex + 1) / entries.length) * 100}%` }"></span></div>
@@ -449,7 +467,19 @@ function formatFileSize(bytes: number): string {
                   </div>
                   <div class="review-card-header">
                     <span class="entry-type">{{ currentEntry.type }}</span>
-                    <span class="entry-id">{{ currentEntry.id }}</span>
+                    <div class="entry-meta">
+                      <span class="entry-id">{{ currentEntry.id }}</span>
+                      <button
+                        v-if="currentEntry.status !== 'pending'"
+                        class="reopen-review"
+                        type="button"
+                        :disabled="isReviewing"
+                        title="Clear this decision and return the entry to the review queue"
+                        @click="reopenReview"
+                      >
+                        ↶ Reopen review
+                      </button>
+                    </div>
                   </div>
                   <p v-if="currentEntry.status !== 'pending'" class="reviewed-state" aria-live="polite">
                     {{ currentEntry.status === 'edited' ? 'Edited and accepted' : currentEntry.status }}
@@ -467,12 +497,12 @@ function formatFileSize(bytes: number): string {
                       </li>
                     </ul>
                   </div>
-                  <div v-if="!isEditing" class="review-actions">
+                  <div v-if="currentEntry.status === 'pending' && !isEditing" class="review-actions">
                     <button class="accept-action" type="button" :disabled="isReviewing" @click="decide('accepted')">Accept</button>
                     <button class="edit-action" type="button" :disabled="isReviewing" @click="startEditing">Edit</button>
                     <button class="reject-action" type="button" :disabled="isReviewing" @click="decide('rejected')">Reject</button>
                   </div>
-                  <div v-else class="review-actions">
+                  <div v-else-if="isEditing" class="review-actions">
                     <button class="accept-action" type="button" :disabled="isReviewing" @click="decide('edited')">Save edit</button>
                     <button class="edit-action" type="button" :disabled="isReviewing" @click="cancelEditing">Cancel</button>
                   </div>

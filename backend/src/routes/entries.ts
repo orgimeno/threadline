@@ -44,7 +44,7 @@ function isThreadlineDate(value: unknown): value is ThreadlineDate {
 function invalidReview(reply: FastifyReply) {
   return reply
     .code(400)
-    .send(httpError('invalid_review', 'Use accepted, edited, or rejected; edited entries require valid content and date metadata.'))
+    .send(httpError('invalid_review', 'Use accepted, edited, or rejected; edited entries require valid content.'))
 }
 
 export function entriesRoutes(sessions?: SessionStore): FastifyPluginAsync { return async (app) => {
@@ -100,5 +100,18 @@ export function entriesRoutes(sessions?: SessionStore): FastifyPluginAsync { ret
         `Entry review is not available yet for ${request.params.id}.`,
       ),
     )
+  })
+
+  app.delete<{ Params: EntryParams }>('/entries/:id/review', async (request, reply) => {
+    if (sessions === undefined) {
+      return reply.code(501).send(
+        httpError('entry_review_not_implemented', `Entry review is not available yet for ${request.params.id}.`),
+      )
+    }
+
+    const entry = sessions.reopen(request.params.id)
+    return entry === null
+      ? reply.code(404).send(httpError('entry_not_found', 'The entry does not exist in the current session.'))
+      : reply.send(entry)
   })
 } }

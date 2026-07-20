@@ -2,6 +2,14 @@
 
 This log records product and technical decisions. Valid statuses are `planned`, `in progress`, and `implemented`.
 
+## 2026-07-20 — Make reviewed entries read-only until reopened
+
+- **Problem/question:** How can a reviewed card communicate finality without letting the user accidentally accept or reject it again?
+- **Decision:** hide normal review actions as soon as an entry leaves `pending` and provide a discrete **Reopen review** action that resets only its status to `pending`.
+- **Reason:** the queue remains legible and prevents accidental repeated decisions while preserving a clear recovery path. Reopening an edited entry retains its edited content because the MVP intentionally has no `originalContent` or edit history.
+- **Codex contribution:** implemented the session reset route, client action, reviewed-card behavior, contract update, and tests.
+- **Pending:** evaluate whether future persistent sessions need a richer undo history.
+
 ## 2026-07-20 — Make import selection additive and extraction failures visible
 
 - **Problem/question:** How should a normal multi-file picker behave, and what should happen when a backend has neither Demo Mode nor a configured OpenAI key?

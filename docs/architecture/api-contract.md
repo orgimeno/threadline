@@ -223,13 +223,7 @@ Applies one review decision to an entry in the current session. The route is int
 ```json
 {
   "status": "edited",
-  "content": "Updated fictional context statement.",
-  "date": {
-    "original": "March 2026",
-    "normalized": "2026-03",
-    "precision": "month",
-    "timezone": "Europe/Madrid"
-  }
+  "content": "Updated fictional context statement."
 }
 ```
 
@@ -256,12 +250,23 @@ Rules:
 
 The route uses the shared `{ "error": { "code", "message" } }` envelope.
 
+### `DELETE /entries/:id/review`
+
+Clears the review decision for an entry and returns it to `pending`, so it reappears as actionable in the review queue. It is used by the discrete **Reopen review** action on reviewed cards.
+
+- Status: `200 OK`
+- Body: the canonical entry with `status: "pending"`.
+- `404 Not Found`: no entry with that `id` exists in the current session.
+
+Reopening preserves the current content, date, and source references. In particular, an entry previously marked `edited` keeps its edited content because the MVP deliberately does not retain `originalContent` or edit history.
+
 ## Does this cover every user action?
 
-The four routes now cover the MVP flow for a bounded synchronous request:
+The five routes now cover the MVP flow for a bounded synchronous request:
 
 - `POST /imports` uploads, processes, and returns `pending` entries;
 - `POST /entries/:id` accepts, edits, or rejects one entry;
+- `DELETE /entries/:id/review` reopens a reviewed entry;
 - `GET /export?format=json` exports the approved JSON context; and
 - `GET /export?format=markdown` exports the approved Markdown context.
 

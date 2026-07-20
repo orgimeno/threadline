@@ -646,6 +646,29 @@ button:disabled {
   gap: 10px;
 }
 
+.entry-meta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.reopen-review {
+  padding: 4px 6px;
+  border: 1px solid #b7c3ba;
+  border-radius: 6px;
+  color: var(--green-dark);
+  background: rgba(255, 255, 255, 0.9);
+  font-size: 0.67rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.reopen-review:hover:not(:disabled) {
+  border-color: var(--green);
+  background: #f4faf6;
+}
+
 .entry-type,
 .entry-id,
 .evidence-label {

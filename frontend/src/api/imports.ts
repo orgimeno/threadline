@@ -163,6 +163,15 @@ export async function reviewEntry(id: string, status: Exclude<EntryStatus, 'pend
   return body
 }
 
+export async function reopenReviewEntry(id: string): Promise<ContextEntry> {
+  const response = await fetch(`${apiBaseUrl}/entries/${encodeURIComponent(id)}/review`, {
+    method: 'DELETE',
+  })
+  const body = await responseBody(response)
+  if (!response.ok || !isContextEntry(body)) throw requestError(response, body)
+  return body
+}
+
 export async function exportContext(format: 'json' | 'markdown'): Promise<Blob> {
   const response = await fetch(`${apiBaseUrl}/export?format=${format}`)
   if (!response.ok) throw requestError(response, await responseBody(response))
