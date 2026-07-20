@@ -571,6 +571,23 @@ button:disabled {
   transition: border-color 180ms ease, box-shadow 180ms ease, transform 180ms ease;
 }
 
+.review-card.is-reviewed::after {
+  position: absolute;
+  z-index: 2;
+  inset: 0;
+  content: '';
+  pointer-events: none;
+  background: rgba(83, 97, 90, 0.1);
+}
+
+.review-card-rejected {
+  border-color: #dfaaa4;
+}
+
+.review-card-rejected::after {
+  background: rgba(174, 54, 44, 0.12);
+}
+
 .entry-card-enter-active,
 .entry-card-leave-active {
   transition: opacity 180ms ease, transform 180ms ease;
@@ -589,6 +606,7 @@ button:disabled {
 .nav-entry { width: 29px; height: 29px; border: 1px solid #cfd8d1; border-radius: 8px; color: var(--muted); background: #fff; font-size: 0.7rem; font-weight: 800; cursor: pointer; }
 .nav-entry.active { color: #fff; border-color: var(--green); background: var(--green); box-shadow: 0 3px 8px rgba(23, 107, 76, 0.2); }
 .nav-entry.done:not(.active) { color: var(--green-dark); border-color: #bad7c6; background: var(--green-light); }
+.nav-entry.done.rejected:not(.active) { color: #9a3029; border-color: #dfaaa4; background: #fff0ee; }
 .nav-entry:disabled { cursor: wait; opacity: 0.65; }
 .entry-date { margin: 11px 0 0; color: var(--muted); font-size: 0.74rem; }
 .review-pagination { margin-top: 12px; display: flex; justify-content: space-between; }
@@ -613,6 +631,33 @@ button:disabled {
   font-weight: 800;
   letter-spacing: 0.08em;
   text-transform: uppercase;
+}
+
+.reviewed-state {
+  position: relative;
+  z-index: 3;
+  width: fit-content;
+  margin: 13px 0 -2px;
+  padding: 4px 8px;
+  border: 1px solid #a7c4b1;
+  border-radius: 999px;
+  color: #315d45;
+  background: rgba(244, 250, 246, 0.94);
+  font-size: 0.66rem;
+  font-weight: 850;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+.review-card-rejected .reviewed-state {
+  border-color: #d4948e;
+  color: #982e27;
+  background: rgba(255, 241, 239, 0.96);
+}
+
+.review-card.is-reviewed > :not(.decision-feedback):not(.reviewed-state) {
+  position: relative;
+  z-index: 1;
 }
 
 .entry-type { color: var(--green-dark); }
@@ -653,7 +698,7 @@ button:disabled {
 .decision-feedback {
   position: absolute;
   inset: 0;
-  z-index: 1;
+  z-index: 4;
   display: grid;
   place-items: center;
   align-content: center;

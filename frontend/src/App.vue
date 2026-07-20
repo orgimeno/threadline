@@ -387,12 +387,15 @@ function formatFileSize(bytes: number): string {
                 <span>{{ pendingCount }} pending</span>
               </div>
               <div class="entry-navigator" aria-label="Recognized entries">
-                <button v-for="(entry, index) in entries" :key="entry.id" type="button" :disabled="isReviewing" :class="['nav-entry', { active: entry.id === currentEntry.id, done: entry.status !== 'pending' }]" @click="selectEntry(entry.id)">
+                <button v-for="(entry, index) in entries" :key="entry.id" type="button" :disabled="isReviewing" :class="['nav-entry', entry.status, { active: entry.id === currentEntry.id, done: entry.status !== 'pending' }]" @click="selectEntry(entry.id)">
                   {{ index + 1 }}
                 </button>
               </div>
               <Transition name="entry-card" mode="out-in">
-                <div :key="currentEntry.id" class="review-card">
+                <div
+                  :key="currentEntry.id"
+                  :class="['review-card', `review-card-${currentEntry.status}`, { 'is-reviewed': currentEntry.status !== 'pending' }]"
+                >
                   <div
                     v-if="reviewFeedback !== null"
                     :class="['decision-feedback', reviewFeedback]"
@@ -406,6 +409,9 @@ function formatFileSize(bytes: number): string {
                     <span class="entry-type">{{ currentEntry.type }}</span>
                     <span class="entry-id">{{ currentEntry.id }}</span>
                   </div>
+                  <p v-if="currentEntry.status !== 'pending'" class="reviewed-state" aria-live="polite">
+                    {{ currentEntry.status === 'edited' ? 'Edited and accepted' : currentEntry.status }}
+                  </p>
                   <p class="review-prompt">Keep this in your portable context?</p>
                   <p v-if="!isEditing" class="entry-content">{{ currentEntry.content }}</p>
                   <textarea v-else v-model="editedContent" class="entry-editor" aria-label="Edit entry content"></textarea>
