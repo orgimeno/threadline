@@ -17,7 +17,7 @@ The application sends the sources to a backend, processes each file separately, 
 The user receives a review queue rather than one enormous generated summary. Each entry can be:
 
 - **Accepted**, so it becomes part of the final context.
-- **Edited**, so the user can correct its content, category, or date.
+- **Edited**, so the user can correct its content while preserving the extracted date and source evidence.
 - **Rejected**, so it is excluded from the final result.
 
 When all entries have been reviewed, Threadline builds a final context that can be downloaded as JSON or Markdown.
@@ -49,7 +49,7 @@ An entry can represent an event, fact, preference, instruction, project, or anot
 
 ## How we built it
 
-Threadline is being designed as a web application with a clear separation between the browser, the backend, and the OpenAI API.
+Threadline is a web application with a clear separation between the browser, the backend, and the OpenAI API.
 
 The current MVP flow is:
 
@@ -67,6 +67,8 @@ The current MVP flow is:
 Codex has been involved from the beginning. I used it to explore the original problem, challenge the product assumptions, define the MVP, design the flow, and turn the idea into an implementable architecture.
 
 The application uses GPT-5.6 for interpretation and extraction. The backend remains responsible for validation, normalization, provenance, and final assembly. The OpenAI API key is kept on the server and is never exposed to the browser.
+
+For judges and local testing, Threadline also includes a deterministic Demo Mode. It creates five fictional review proposals without contacting OpenAI, so the complete review and export experience can be evaluated without an API key.
 
 For the first MVP, there is no user account or permanent database. The files and reviewed entries exist during the current session, and the result is exported by the user. This keeps the first version focused on the core workflow.
 
@@ -111,13 +113,13 @@ Building Threadline also made me realize that software development is entering a
 
 ## What's next for Threadline
 
-The next step is to implement the first vertical slice:
+The core MVP flow is implemented:
 
 ```text
-Import one JSON file -> extract entries -> review one entry -> export JSON
+Import JSON or Markdown -> extract entries -> review each entry -> export JSON or Markdown
 ```
 
-After that, the MVP will expand to multiple JSON and Markdown files, duplicate detection, possible conflict detection, and the complete review queue shown in the flowchart.
+The immediate next work is a synthetic evaluation set, presentation polish, and optional deployment. After that, Threadline can expand with duplicate detection, contradiction assistance, and stronger privacy controls.
 
 Future versions could add more export formats, stronger privacy controls, local processing options, and direct integrations with AI platforms.
 

@@ -1,6 +1,6 @@
 # Threadline
 
-> Project status: **in progress**. The temporary-session MVP flow is implemented: import, bounded OpenAI extraction, human review, and JSON/Markdown export.
+> Project status: **implemented MVP**. The temporary-session flow supports import, bounded OpenAI extraction, human review, and JSON/Markdown export. Hackathon presentation and future product work remain in progress.
 
 Threadline is a web application that turns unstructured exports of AI conversations into structured, traceable context that a person can review.
 
@@ -21,7 +21,7 @@ npm run dev:backend
 npm run dev:frontend
 ```
 
-Open the frontend URL, import either fictional file in `examples/sample-input`, review five generated demo proposals, and export JSON or Markdown. Demo mode is deterministic and never contacts OpenAI. Set `DEMO_MODE=false` and add `OPENAI_API_KEY` to use the live GPT-5.6 Terra extraction path.
+Open the frontend URL, drop or select either fictional file in `examples/sample-input`, review the five generated demo proposals, and export JSON or Markdown. Demo Mode is deterministic, runs locally in the backend, and never contacts OpenAI. It is the recommended judge path. Set `DEMO_MODE=false` and add `OPENAI_API_KEY` to use the live GPT-5.6 Terra extraction path. If neither Demo Mode nor a key is configured, imports return a clear configuration error.
 
 ## Hackathon implementation
 
@@ -44,11 +44,11 @@ Threadline offers a different workflow: import individual files, extract candida
 7. Threadline builds the final context from accepted and edited entries.
 8. The user previews and exports it as JSON or Markdown; the export can become input for a later import cycle.
 
-The planned diagram is available at [docs/architecture/threadline-flow.mmd](docs/architecture/threadline-flow.mmd).
+The implemented flow diagram is available at [docs/architecture/threadline-flow.mmd](docs/architecture/threadline-flow.mmd).
 
 The canonical context contract is documented in [docs/architecture/canonical-schema.md](docs/architecture/canonical-schema.md). The MVP export root uses `schemaVersion: "threadline.v1"`; entries use the controlled types and review states described there.
 
-The planned extraction boundary is documented in [docs/architecture/extraction-contract.md](docs/architecture/extraction-contract.md). It explains how Threadline can interpret arbitrary valid JSON and Markdown without provider-specific adapters while preserving source traceability.
+The extraction boundary is documented in [docs/architecture/extraction-contract.md](docs/architecture/extraction-contract.md). It explains how Threadline interprets arbitrary valid JSON and Markdown without provider-specific adapters while preserving source traceability.
 
 ## MVP scope
 
@@ -72,7 +72,7 @@ Node.js + Fastify + TypeScript
 Responses API + GPT-5.6
 ```
 
-Communication will use a REST API. Files and state will exist only during the initial session: the MVP has no persistent storage. The OpenAI API key will remain exclusively on the backend, never in the browser. The rationale is documented in [docs/architecture/architecture-decisions.md](docs/architecture/architecture-decisions.md).
+Communication uses a REST API. Files and state exist only during the active session: the MVP has no persistent storage. The OpenAI API key remains exclusively on the backend, never in the browser. The rationale is documented in [docs/architecture/architecture-decisions.md](docs/architecture/architecture-decisions.md).
 
 ## GPT-5.6 integration
 
@@ -84,9 +84,9 @@ The live path uses bounded inputs, a 60-second timeout, one SDK retry, safe erro
 
 | Layer | Technology | Status |
 | --- | --- | --- |
-| Frontend | Vue 3, Vite, and TypeScript | in progress |
-| Backend | Node.js, Fastify, and TypeScript | in progress |
-| API | REST with `multipart/form-data` for imports | in progress |
+| Frontend | Vue 3, Vite, and TypeScript | implemented |
+| Backend | Node.js, Fastify, and TypeScript | implemented |
+| API | REST with `multipart/form-data` for imports | implemented |
 | AI | OpenAI Responses API with GPT-5.6 Terra | implemented |
 | State | Temporary in-memory session | implemented |
 | Export | JSON and Markdown | implemented |
@@ -100,7 +100,7 @@ Codex helped inspect the repository, define the MVP boundary, document the first
 
 The files in [examples/sample-input](examples/sample-input) and [examples/sample-output](examples/sample-output) are entirely fictional. They contain no real conversation exports or personal data, and illustrate mixed input and consolidated final context.
 
-## Running the current skeleton
+## Running Threadline locally
 
 Prerequisites:
 
@@ -126,6 +126,7 @@ The frontend development server prints its local URL. During local development, 
 - `GET /health` returns a service health response.
 - `POST /imports` validates sources, extracts bounded proposals, and returns pending entries.
 - `POST /entries/:id` accepts, edits, or rejects a session entry.
+- `DELETE /entries/:id/review` reopens a reviewed entry and returns it to `pending`.
 - `GET /export?format=json` and `GET /export?format=markdown` export approved entries.
 
 Run all current checks from the repository root:
@@ -136,7 +137,7 @@ npm test
 npm run build
 ```
 
-Copy `backend/.env.example` to `backend/.env` and set `OPENAI_API_KEY`. The backend reads it locally and Git ignores the real `.env` file.
+Copy `backend/.env.example` to `backend/.env`. Use `DEMO_MODE=true` for the no-key judge path, or use `DEMO_MODE=false` with `OPENAI_API_KEY` for live extraction. Git ignores the real `.env` file.
 
 The repeatable browser, curl, Postman, and VS Code review procedure is documented in [docs/testing/manual-import-validation.md](docs/testing/manual-import-validation.md).
 
@@ -155,4 +156,4 @@ The repeatable browser, curl, Postman, and VS Code review procedure is documente
 | Live OpenAI call | implemented | Backend-only key, bounded inputs, retry, timeout, and safe errors. |
 | Review and export | implemented | Temporary in-memory decisions and JSON/Markdown downloads. |
 
-The next step is a manual end-to-end review with fictional sources, then a small evaluation set and presentation polish for the hackathon.
+Next product work includes a small synthetic evaluation set, privacy controls, duplicate and contradiction assistance, and optional deployment. These are future improvements, not requirements for the implemented MVP.

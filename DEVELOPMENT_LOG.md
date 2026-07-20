@@ -2,6 +2,14 @@
 
 This log records product and technical decisions. Valid statuses are `planned`, `in progress`, and `implemented`.
 
+## 2026-07-21 — Align public documentation with the implemented MVP
+
+- **Problem/question:** Which public documents still described an earlier technical-validation slice rather than the completed import-to-export workflow?
+- **Decision:** update the README, architecture documents, manual test guide, project narrative, and flow diagram to describe Demo Mode, five synthetic entries, additive import, read-only extracted dates, review reopening, live extraction, and current implementation status accurately.
+- **Reason:** judges need a truthful no-key test path and documentation that distinguishes the completed MVP from future work.
+- **Codex contribution:** audited public documentation against the codebase, removed stale future-tense claims, and preserved explicit MVP limits and future work.
+- **Pending:** record and publish the public demo video, then complete the Devpost submission.
+
 ## 2026-07-20 — Make reviewed entries read-only until reopened
 
 - **Problem/question:** How can a reviewed card communicate finality without letting the user accidentally accept or reject it again?

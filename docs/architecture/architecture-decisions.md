@@ -6,12 +6,12 @@
 
 | Area | Decision | Status |
 | --- | --- | --- |
-| Frontend | Vue 3, Vite, and TypeScript | in progress |
-| Backend | Node.js, Fastify, and TypeScript | in progress |
-| Communication | REST API | in progress |
-| Input | `multipart/form-data` | in progress |
+| Frontend | Vue 3, Vite, and TypeScript | implemented |
+| Backend | Node.js, Fastify, and TypeScript | implemented |
+| Communication | REST API | implemented |
+| Input | `multipart/form-data` | implemented |
 | AI | OpenAI Responses API and GPT-5.6 Terra | implemented |
-| Persistence | None in the MVP | planned |
+| Persistence | None in the MVP | implemented boundary |
 | State | Temporary for the active session | implemented |
 | Output | JSON and Markdown | implemented |
 | OpenAI API key | Backend only | implemented |
@@ -19,15 +19,15 @@
 
 ## Frontend: Vue 3, Vite, and TypeScript
 
-The interface is a Vue 3 SPA created with Vite and TypeScript. Its current shell supports local file selection and displays the planned workflow. Its next responsibilities are sending files, showing processing results, and supporting individual entry review. The frontend will not handle credentials or call OpenAI directly.
+The interface is a Vue 3 SPA created with Vite and TypeScript. It supports additive local file selection through the picker or drag and drop, import progress and errors, an entry-by-entry review queue, reopening reviewed entries, and JSON/Markdown downloads. The frontend never handles credentials or calls OpenAI directly.
 
 ## Backend: Node.js, Fastify, and TypeScript
 
-The backend skeleton uses a Fastify application factory with independently tested routes. It will receive files, detect and validate their format, prepare model requests, and validate model responses. Fastify is selected as a lightweight HTTP server with suitable route and validation support. Shared runtime models may be introduced after the first concrete validation boundary exists.
+The backend uses a Fastify application factory with independently tested routes. It receives files, validates their technical format, prepares bounded model requests, validates structured model responses, keeps temporary review state, and renders exports. Fastify is selected as a lightweight HTTP server with suitable route and validation support.
 
 ## Communication and input
 
-The frontend will send multiple files through a REST API using `multipart/form-data`. Import is explicit: the MVP will not connect directly to ChatGPT, Gemini, Claude, or any external account. Each source will receive a temporary identifier and retain at least its name, type, and fragment locator to preserve traceability.
+The frontend sends multiple files through a REST API using `multipart/form-data`. Import is explicit: the MVP does not connect directly to ChatGPT, Gemini, Claude, or any external account. Sources can be added incrementally and retain their name, type, and fragment locator to preserve traceability.
 
 The implemented technical boundary accepts only the multipart field `files`, with up to 10 files, 2 MiB per file, and 10 MiB per request. It accepts `.json`, `.md`, and `.markdown` filenames, requires valid UTF-8, and checks JSON syntax without requiring a provider-specific layout. MIME headers are not treated as authoritative because they are client-supplied. File contents are held only long enough to validate the request and are not written to disk or persisted.
 
@@ -35,7 +35,7 @@ The frontend now uses the browser's native `fetch` and `FormData` APIs rather th
 
 ## AI: Responses API and GPT-5.6
 
-The backend will use the OpenAI Responses API with `gpt-5.6`. It will request structured JSON containing proposed entries and source references. Model output will never be exported directly: the backend will validate it against the canonical schema and the interface will present it in `pending` status.
+The backend uses the OpenAI Responses API with `gpt-5.6-terra`. It requests structured JSON containing proposed entries and source references. Model output is never exported directly: the backend validates it against the canonical schema and the interface presents it in `pending` status. The live request uses `store: false`, bounded inputs, a timeout, and one retry.
 
 The key will be read only by the backend process through an environment variable. It will not be exposed in client code, example files, API responses, or the repository.
 
@@ -47,7 +47,7 @@ The backend performs only deterministic technical checks before the model call: 
 
 GPT-5.6 is responsible for semantic interpretation of heterogeneous source content. It identifies useful messages or passages, classifies context, normalizes dates when evidence supports it, and returns entries that match Threadline's canonical schema. The backend then validates the model response and verifies its source references before the frontend shows the entries as `pending`.
 
-Validated content now remains available only inside the backend request lifecycle. The extraction preparer creates one internal envelope per source: original JSON text with a JSON Pointer strategy, or Markdown text annotated with one-based line numbers. Public validation responses contain only source summaries and never include conversation content. Token-aware chunking remains required before live model integration.
+Validated content remains available only inside the backend request lifecycle. The extraction preparer creates one internal envelope per source: original JSON text with a JSON Pointer strategy, or Markdown text annotated with one-based line numbers. Public validation responses contain only source summaries and never include conversation content. Oversized sources fail within the documented bounded-input budget; richer chunking is a future enhancement.
 
 Malformed JSON is reported per file with a stable error code and human-readable reason. Threadline does not silently repair malformed JSON through the model, because doing so could break provenance. Automatic repair may be considered as a separate, explicitly reviewed feature later.
 
@@ -67,7 +67,7 @@ Docker is not required for the first implementation. It can be added for reprodu
 
 ## Consequences and pending decisions
 
-- The canonical entry schema and source-location rules are defined; runtime schemas remain to be implemented.
-- Initial file and request limits are defined; chunking details and retry behavior must be decided before the live model call is integrated.
+- The canonical entry schema and source-location rules are implemented through runtime schemas and validation.
+- Initial file and request limits, timeout, and retry behavior are implemented; richer chunking remains future work.
 - The lack of persistence reduces complexity, but requires a clear notice about session lifetime.
 - Provider-specific export formats are a future evolution; the MVP accepts generic JSON and Markdown.

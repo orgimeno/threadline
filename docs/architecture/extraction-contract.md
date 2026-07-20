@@ -58,7 +58,7 @@ The extraction instruction must require GPT-5.6 to:
 
 The request must not enable tools. Threadline needs structured extraction, not web search, external access, or autonomous actions.
 
-The implemented preparer creates one request envelope per validated source. Each envelope contains the fixed extraction instruction, strict proposal schema, filename, source format, locator strategy, deterministic request-local source identifier, and delimited source content. Processing remains sequential as decided for the MVP. A future OpenAI adapter will translate this internal envelope to the Responses API without exposing the API key or source content to the frontend.
+The implemented preparer creates one request envelope per validated source. Each envelope contains the fixed extraction instruction, strict proposal schema, filename, source format, locator strategy, deterministic request-local source identifier, and delimited source content. Processing remains sequential as decided for the MVP. The implemented OpenAI adapter translates this envelope to the Responses API without exposing the API key or source content to the frontend.
 
 ## Model output and backend completion
 

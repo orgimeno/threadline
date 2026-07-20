@@ -1,6 +1,6 @@
 # Threadline canonical context schema
 
-> Status: **implemented as an MVP specification and backend runtime validator**. Application integration remains **in progress**.
+> Status: **implemented for the MVP**. The schema, runtime validation, frontend review, and JSON/Markdown export use this contract.
 
 ## Purpose
 
@@ -13,9 +13,9 @@ The schema is intentionally small. It preserves the information needed for categ
 The backend implements this specification as TypeScript types, JSON Schema, and Ajv-backed runtime validation. Two related documents are deliberately separate:
 
 - The canonical Threadline document includes `schemaVersion`, backend-assigned `id` values, and review `status` values.
-- The extraction proposal contains only `type`, `content`, `date`, and `sourceReferences`. GPT-5.6 will not be allowed to assign identifiers or review states.
+- The extraction proposal contains only `type`, `content`, `date`, and `sourceReferences`. GPT-5.6 is not allowed to assign identifiers or review states.
 
-Runtime validation rejects unknown properties, invalid enums, duplicate entry identifiers, inconsistent normalized dates, unrecognized time zones, malformed JSON Pointers, and invalid Markdown line ranges. Locator syntax can be validated without source content; confirming that a locator actually exists remains part of the future extraction request lifecycle.
+Runtime validation rejects unknown properties, invalid enums, duplicate entry identifiers, inconsistent normalized dates, unrecognized time zones, malformed JSON Pointers, and invalid Markdown line ranges. During live extraction, the backend also confirms that each returned locator exists in its imported source.
 
 ## Root export document
 

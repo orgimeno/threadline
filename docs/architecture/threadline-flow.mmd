@@ -27,6 +27,9 @@ flowchart TD
       accepted --> final[Builds final context]
       edited --> final
       rejected --> next[Continues to the next entry]
+      accepted -. Reopen review .-> queue
+      edited -. Reopen review .-> queue
+      rejected -. Reopen review .-> queue
       next --> queue
       final --> preview[Previews the context]
       preview --> export[Exports JSON or Markdown]
