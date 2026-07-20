@@ -208,7 +208,7 @@ describe('Threadline application shell', () => {
     await flushPromises()
   })
 
-  it('allows an edited entry to add date metadata', async () => {
+  it('edits entry content while preserving the extracted date metadata', async () => {
     const result: ImportResponse = {
       importId: 'import-test',
       sources: [],
@@ -219,12 +219,7 @@ describe('Threadline application shell', () => {
       ...pendingEntry,
       status: 'edited',
       content: 'Jordan started a fictional ceramics course in March 2026.',
-      date: {
-        original: 'March 2026',
-        normalized: '2026-03',
-        precision: 'month',
-        timezone: 'Europe/Madrid',
-      },
+      date: pendingEntry.date,
     }
     importSourcesMock.mockResolvedValue(result)
     reviewEntryMock.mockResolvedValue(updatedEntry)
@@ -236,16 +231,10 @@ describe('Threadline application shell', () => {
     await wrapper.get('.edit-action').trigger('click')
     await wrapper.get('.entry-editor').setValue(updatedEntry.content)
 
-    const inputs = wrapper.findAll('.date-editor input')
-    await inputs[0]!.setValue('March 2026')
-    await inputs[1]!.setValue('2026-03')
-    await wrapper.get('.date-editor select').setValue('month')
-    await inputs[2]!.setValue('Europe/Madrid')
     await wrapper.get('.accept-action').trigger('click')
 
     expect(reviewEntryMock).toHaveBeenCalledWith('entry-001', 'edited', {
       content: updatedEntry.content,
-      date: updatedEntry.date,
     })
   })
 })

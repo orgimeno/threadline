@@ -239,7 +239,7 @@ Rules:
 - `pending` is an extraction/review state and is not a user decision sent by this route.
 - `content` is required when `status` is `edited` and is optional for `accepted` or `rejected`.
 - `content` must be a non-empty string when provided.
-- `date` is optional and may be supplied when `status` is `edited`; when present, it must match the canonical date contract.
+- The backend can validate an optional canonical `date` update for future clients, but the current MVP review UI preserves the model-extracted date and does not offer manual date editing.
 - The backend preserves the entry's `sourceReferences`.
 
 #### Success response

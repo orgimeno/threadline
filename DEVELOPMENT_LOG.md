@@ -10,13 +10,13 @@ This log records product and technical decisions. Valid statuses are `planned`, 
 - **Codex contribution:** implemented the additive drop zone, explicit backend guard, deterministic five-entry demo queue, and frontend/backend regression tests.
 - **Pending:** run a final manual pass in both Demo Mode and live extraction mode before recording the hackathon video.
 
-## 2026-07-20 — Improve review feedback and editable date metadata
+## 2026-07-20 — Improve review feedback and preserve extracted date metadata
 
-- **Problem/question:** How can the review queue make long extraction waits and review actions feel responsive, and how can a user correct an entry that has no extracted date?
-- **Decision:** show an explicit processing indicator while import/extraction is pending, add short accept/edit/reject feedback before advancing the queue, and let edited entries update date metadata through the existing canonical `date` object.
-- **Reason:** the MVP must remain understandable during slow model calls, and users need a controlled way to correct missing dates without adding edit history or changing the canonical schema.
-- **Codex contribution:** implemented the frontend interaction, extended the review API to accept validated date metadata for edited entries, and added regression tests for the UI, API client, and temporary session store.
-- **Pending:** run a manual browser pass with fictional sources and decide whether the demo extractor should produce richer synthetic entries for judges.
+- **Problem/question:** How can the review queue make long extraction waits and review actions feel responsive without turning date correction into a complex form?
+- **Decision:** show an explicit processing indicator while import/extraction is pending, add short accept/edit/reject feedback before advancing the queue, and preserve the extracted canonical date as read-only while editing content.
+- **Reason:** the MVP must remain understandable during slow model calls, and a calendar input would incorrectly imply that every source date is a complete calendar day with unambiguous precision and time zone.
+- **Codex contribution:** implemented the frontend interaction, simplified the review payload to content-only edits, retained the canonical date contract for future clients, and updated regression coverage.
+- **Pending:** decide later whether a dedicated date-correction interaction is valuable after observing real extraction errors.
 
 ## 2026-07-20 — Make live extraction stateless and model configuration explicit
 

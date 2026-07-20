@@ -6,7 +6,6 @@ import {
   importSources,
   reviewEntry,
   exportContext,
-  type DatePrecision,
   type ContextEntry,
   type ImportResponse,
   type SourceImportError,
@@ -17,7 +16,6 @@ type ImportState = 'idle' | 'submitting' | 'success' | 'error'
 type ReviewStatus = 'accepted' | 'edited' | 'rejected'
 type ReviewFeedback = 'positive' | 'negative' | null
 
-const datePrecisions: DatePrecision[] = ['unknown', 'year', 'month', 'day', 'hour', 'minute']
 const reviewFeedbackDelayMs = 420
 
 const selectedFiles = ref<File[]>([])
@@ -27,10 +25,6 @@ const importError = ref<ImportRequestError | null>(null)
 const sourceInput = ref<HTMLInputElement | null>(null)
 const entries = ref<ContextEntry[]>([])
 const editedContent = ref('')
-const editedDateOriginal = ref('')
-const editedDateNormalized = ref('')
-const editedDatePrecision = ref<DatePrecision>('unknown')
-const editedDateTimezone = ref('')
 const reviewError = ref<string | null>(null)
 const isEditing = ref(false)
 const isReviewing = ref(false)
@@ -69,19 +63,6 @@ function wait(ms: number): Promise<void> {
 
 function setEditForm(entry: ContextEntry | null) {
   editedContent.value = entry?.content ?? ''
-  editedDateOriginal.value = entry?.date.original ?? ''
-  editedDateNormalized.value = entry?.date.normalized ?? ''
-  editedDatePrecision.value = entry?.date.precision ?? 'unknown'
-  editedDateTimezone.value = entry?.date.timezone ?? ''
-}
-
-function editedDate(): ThreadlineDate {
-  return {
-    original: editedDateOriginal.value.trim() || null,
-    normalized: editedDateNormalized.value.trim() || null,
-    precision: editedDatePrecision.value,
-    timezone: editedDateTimezone.value.trim() || null,
-  }
 }
 
 function displayDate(date: ThreadlineDate): string {
@@ -194,7 +175,7 @@ async function decide(status: ReviewStatus) {
     const updated = await reviewEntry(
       currentEntry.value.id,
       status,
-      status === 'edited' ? { content: editedContent.value, date: editedDate() } : {},
+      status === 'edited' ? { content: editedContent.value } : {},
     )
     entries.value = entries.value.map((entry) => entry.id === updated.id ? updated : entry)
     reviewFeedback.value = status === 'rejected' ? 'negative' : 'positive'
@@ -477,28 +458,7 @@ function formatFileSize(bytes: number): string {
                   <p v-if="!isEditing" class="entry-content">{{ currentEntry.content }}</p>
                   <textarea v-else v-model="editedContent" class="entry-editor" aria-label="Edit entry content"></textarea>
                   <p v-if="!isEditing" class="entry-date">{{ displayDate(currentEntry.date) }}</p>
-                  <div v-else class="date-editor" aria-label="Edit entry date metadata">
-                    <label>
-                      <span>Source date text</span>
-                      <input v-model="editedDateOriginal" placeholder="March 2026" />
-                    </label>
-                    <label>
-                      <span>Normalized date</span>
-                      <input v-model="editedDateNormalized" placeholder="2026-03 or 2026-03-12T09:30" />
-                    </label>
-                    <label>
-                      <span>Precision</span>
-                      <select v-model="editedDatePrecision">
-                        <option v-for="precision in datePrecisions" :key="precision" :value="precision">
-                          {{ precision }}
-                        </option>
-                      </select>
-                    </label>
-                    <label>
-                      <span>Timezone</span>
-                      <input v-model="editedDateTimezone" placeholder="Europe/Madrid" />
-                    </label>
-                  </div>
+                  <p v-else class="entry-date">Extracted date: {{ displayDate(currentEntry.date) }}</p>
                   <div class="evidence">
                     <span class="evidence-label">Source evidence</span>
                     <ul>

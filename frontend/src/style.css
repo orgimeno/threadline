@@ -687,36 +687,6 @@ button:disabled {
 .review-prompt { margin: 18px 0 7px; color: var(--muted); font-size: 0.78rem; }
 .entry-content { margin: 0; font-family: Georgia, serif; font-size: 1.13rem; line-height: 1.45; }
 .entry-editor { width: 100%; min-height: 112px; margin-top: 4px; padding: 12px; border: 1px solid #9db6a7; border-radius: 9px; background: #fff; color: var(--ink); line-height: 1.5; resize: vertical; }
-.date-editor {
-  margin-top: 13px;
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 10px;
-}
-
-.date-editor label {
-  display: grid;
-  gap: 5px;
-  color: var(--muted);
-  font-size: 0.68rem;
-  font-weight: 800;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-}
-
-.date-editor input,
-.date-editor select {
-  width: 100%;
-  min-height: 38px;
-  padding: 0 10px;
-  border: 1px solid #c5d3ca;
-  border-radius: 8px;
-  color: var(--ink);
-  background: #fff;
-  letter-spacing: 0;
-  text-transform: none;
-}
-
 .decision-feedback {
   position: absolute;
   inset: 0;
@@ -778,12 +748,6 @@ button:disabled {
 .accept-action { border: 0; color: #fff; background: var(--green); }
 .edit-action { border: 1px solid #b9c6bd; color: var(--green-dark); background: #fff; }
 .reject-action { margin-left: auto; border: 1px solid #e6c1ba; color: #8a3f30; background: #fff7f5; }
-
-@media (max-width: 640px) {
-  .date-editor {
-    grid-template-columns: 1fr;
-  }
-}
 
 .empty-state-icon {
   margin-bottom: 12px;
