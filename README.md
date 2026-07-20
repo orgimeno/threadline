@@ -21,7 +21,7 @@ npm run dev:backend
 npm run dev:frontend
 ```
 
-Open the frontend URL, import either fictional file in `examples/sample-input`, review the generated demo proposal, and export JSON or Markdown. Demo mode is deterministic and never contacts OpenAI. Set `DEMO_MODE=false` and add `OPENAI_API_KEY` to use the live GPT-5.6 Terra extraction path.
+Open the frontend URL, import either fictional file in `examples/sample-input`, review five generated demo proposals, and export JSON or Markdown. Demo mode is deterministic and never contacts OpenAI. Set `DEMO_MODE=false` and add `OPENAI_API_KEY` to use the live GPT-5.6 Terra extraction path.
 
 ## Hackathon implementation
 

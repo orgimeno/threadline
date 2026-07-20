@@ -23,7 +23,7 @@ Accepts one or more JSON or Markdown files, performs lightweight technical valid
 
 #### Current implementation
 
-The endpoint receives multipart files, enforces the MVP limits, validates UTF-8 and file extensions, parses JSON syntax, prepares bounded extraction requests, and returns per-file results plus proposed entries. With `DEMO_MODE=true`, it returns deterministic synthetic proposals without contacting OpenAI. With `DEMO_MODE=false` and a configured backend key, it calls OpenAI from the backend only.
+The endpoint receives multipart files, enforces the MVP limits, validates UTF-8 and file extensions, parses JSON syntax, prepares bounded extraction requests, and returns per-file results plus proposed entries. With `DEMO_MODE=true`, it returns five deterministic synthetic proposals without contacting OpenAI. With `DEMO_MODE=false` and a configured backend key, it calls OpenAI from the backend only. If neither mode nor a key is configured, it returns `503 extraction_unavailable` with an actionable configuration message rather than presenting a technically successful import with no extraction result.
 
 A technically valid source has the source status `validated`. This is not an entry review status and does not add to or replace `pending`, `accepted`, `edited`, or `rejected`.
 

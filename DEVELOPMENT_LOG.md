@@ -2,6 +2,14 @@
 
 This log records product and technical decisions. Valid statuses are `planned`, `in progress`, and `implemented`.
 
+## 2026-07-20 — Make import selection additive and extraction failures visible
+
+- **Problem/question:** How should a normal multi-file picker behave, and what should happen when a backend has neither Demo Mode nor a configured OpenAI key?
+- **Decision:** allow sources to be added through repeated file selection or drag and drop, allow individual removal before submission, and reject configured-but-unavailable extraction with `503 extraction_unavailable` and an actionable message. Demo Mode always returns five fictional entries so the review queue can be tested from one source.
+- **Reason:** replacing earlier selections made multi-file import unexpectedly fragile, while a technically valid request that silently produced no entries obscured a configuration problem.
+- **Codex contribution:** implemented the additive drop zone, explicit backend guard, deterministic five-entry demo queue, and frontend/backend regression tests.
+- **Pending:** run a final manual pass in both Demo Mode and live extraction mode before recording the hackathon video.
+
 ## 2026-07-20 — Improve review feedback and editable date metadata
 
 - **Problem/question:** How can the review queue make long extraction waits and review actions feel responsive, and how can a user correct an entry that has no extracted date?

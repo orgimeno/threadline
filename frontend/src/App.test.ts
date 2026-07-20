@@ -77,6 +77,29 @@ describe('Threadline application shell', () => {
     expect(wrapper.get('[data-testid="import-button"]').attributes('disabled')).toBeUndefined()
   })
 
+  it('adds files from repeated selections instead of replacing the current selection', async () => {
+    const wrapper = mount(App)
+    const firstFile = new File(['{}'], 'conversation.json', { type: 'application/json' })
+    const secondFile = new File(['# Notes'], 'notes.md', { type: 'text/markdown' })
+
+    await selectFiles(wrapper, [firstFile])
+    await selectFiles(wrapper, [secondFile])
+
+    expect(wrapper.text()).toContain('2 sources')
+    expect(wrapper.text()).toContain('conversation.json')
+    expect(wrapper.text()).toContain('notes.md')
+  })
+
+  it('adds files dropped on the import zone', async () => {
+    const wrapper = mount(App)
+    const droppedFile = new File(['# Dropped note'], 'dropped.md', { type: 'text/markdown' })
+
+    await wrapper.get('.drop-zone').trigger('drop', { dataTransfer: { files: [droppedFile] } })
+
+    expect(wrapper.text()).toContain('1 source')
+    expect(wrapper.text()).toContain('dropped.md')
+  })
+
   it('shows validated sources and partial per-file errors', async () => {
     const result: ImportResponse = {
       importId: 'import-test',
@@ -140,6 +163,24 @@ describe('Threadline application shell', () => {
     expect(wrapper.get('[role="alert"]').text()).toContain('broken.json')
     expect(wrapper.get('[data-testid="import-button"]').text()).toContain('Retry')
     expect(wrapper.get('[data-testid="import-button"]').attributes('disabled')).toBeUndefined()
+  })
+
+  it('explains when extraction has not been configured on the backend', async () => {
+    importSourcesMock.mockRejectedValue(
+      new ImportRequestError(
+        503,
+        'extraction_unavailable',
+        'Extraction is unavailable. Enable DEMO_MODE=true or configure OPENAI_API_KEY in the backend environment, then restart the backend.',
+      ),
+    )
+    const wrapper = mount(App)
+
+    await selectFiles(wrapper, [new File(['# Notes'], 'notes.md')])
+    await wrapper.get('[data-testid="import-button"]').trigger('click')
+    await flushPromises()
+
+    expect(wrapper.get('[role="alert"]').text()).toContain('Enable DEMO_MODE=true')
+    expect(wrapper.get('[role="alert"]').text()).toContain('extraction_unavailable')
   })
 
   it('prevents another submission while validation is running', async () => {

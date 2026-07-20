@@ -122,16 +122,21 @@ export function importRoutes(extractor?: ExtractionService, sessions?: SessionSt
       })
     }
 
+    if (extractor === undefined || sessions === undefined) {
+      return reply.code(503).send(httpError(
+        'extraction_unavailable',
+        'Extraction is unavailable. Enable DEMO_MODE=true or configure OPENAI_API_KEY in the backend environment, then restart the backend.',
+      ))
+    }
+
     let entries: unknown[] = []
-    if (extractor !== undefined && sessions !== undefined) {
-      try {
-        entries = await extractor.extract(prepareExtractionRequests(sources))
-        sessions.replace(entries as never)
-      } catch (error) {
-        app.log.error({ err: error }, 'OpenAI extraction failed')
-        const message = error instanceof ExtractionError ? error.message : 'OpenAI could not process this import.'
-        return reply.code(502).send(httpError('extraction_failed', message))
-      }
+    try {
+      entries = await extractor.extract(prepareExtractionRequests(sources))
+      sessions.replace(entries as never)
+    } catch (error) {
+      app.log.error({ err: error }, 'OpenAI extraction failed')
+      const message = error instanceof ExtractionError ? error.message : 'OpenAI could not process this import.'
+      return reply.code(502).send(httpError('extraction_failed', message))
     }
     return reply.send({
       importId: `import-${randomUUID()}`,

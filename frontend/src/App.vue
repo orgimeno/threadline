@@ -36,6 +36,8 @@ const isEditing = ref(false)
 const isReviewing = ref(false)
 const reviewFeedback = ref<ReviewFeedback>(null)
 const selectedEntryId = ref<string | null>(null)
+const isDraggingFiles = ref(false)
+let dragDepth = 0
 
 const hasSelectedSources = computed(() => selectedFiles.value.length > 0)
 const isSubmitting = computed(() => importState.value === 'submitting')
@@ -95,10 +97,53 @@ function resetImportOutcome() {
   reviewError.value = null
 }
 
+function fileKey(file: File): string {
+  return `${file.name}-${file.size}-${file.lastModified}`
+}
+
+function addFiles(files: Iterable<File>) {
+  const knownFiles = new Set(selectedFiles.value.map(fileKey))
+  const additions = Array.from(files).filter((file) => {
+    const key = fileKey(file)
+    if (knownFiles.has(key)) return false
+    knownFiles.add(key)
+    return true
+  })
+
+  if (additions.length === 0) return
+
+  selectedFiles.value = [...selectedFiles.value, ...additions]
+  resetImportOutcome()
+}
+
 function handleFileSelection(event: Event) {
   const input = event.target as HTMLInputElement
 
-  selectedFiles.value = Array.from(input.files ?? [])
+  addFiles(input.files ?? [])
+  // Resetting lets users add the same file again after removing it from the list.
+  input.value = ''
+}
+
+function handleDragEnter() {
+  if (isSubmitting.value) return
+  dragDepth += 1
+  isDraggingFiles.value = true
+}
+
+function handleDragLeave() {
+  dragDepth = Math.max(0, dragDepth - 1)
+  isDraggingFiles.value = dragDepth > 0
+}
+
+function handleDrop(event: DragEvent) {
+  dragDepth = 0
+  isDraggingFiles.value = false
+  if (isSubmitting.value) return
+  addFiles(event.dataTransfer?.files ?? [])
+}
+
+function removeFile(index: number) {
+  selectedFiles.value = selectedFiles.value.filter((_, currentIndex) => currentIndex !== index)
   resetImportOutcome()
 }
 
@@ -241,10 +286,17 @@ function formatFileSize(bytes: number): string {
             <span class="limit-note">Up to 10 files</span>
           </div>
 
-          <label class="drop-zone" for="source-files">
+          <label
+            :class="['drop-zone', { 'is-dragging': isDraggingFiles }]"
+            for="source-files"
+            @dragenter.prevent="handleDragEnter"
+            @dragover.prevent
+            @dragleave.prevent="handleDragLeave"
+            @drop.prevent="handleDrop"
+          >
             <span class="upload-icon" aria-hidden="true">↑</span>
-            <strong>Choose JSON or Markdown files</strong>
-            <span>Each file can be up to 2 MiB.</span>
+            <strong>Drop JSON or Markdown files here, or choose files</strong>
+            <span>Files are added to your selection. Up to 10 files, 2 MiB each.</span>
             <input
               id="source-files"
               ref="sourceInput"
@@ -276,6 +328,15 @@ function formatFileSize(bytes: number): string {
                 <span class="file-badge">{{ source.name.split('.').pop()?.toUpperCase() }}</span>
                 <span class="source-name">{{ source.name }}</span>
                 <span class="source-size">{{ formatFileSize(source.size) }}</span>
+                <button
+                  class="remove-file"
+                  type="button"
+                  :disabled="isSubmitting"
+                  :aria-label="`Remove ${source.name}`"
+                  @click.prevent="removeFile(index)"
+                >
+                  Remove
+                </button>
               </li>
             </ul>
           </div>

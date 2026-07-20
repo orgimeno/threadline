@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it } from 'vitest'
+import { afterAll, afterEach, beforeEach, describe, expect, it } from 'vitest'
 
 import { buildApp } from '../src/app.js'
 
@@ -37,13 +37,24 @@ function multipartPayload(files: MultipartFile[]) {
 
 describe('Threadline backend skeleton', () => {
   let app: ReturnType<typeof buildApp>
+  const originalDemoMode = process.env.DEMO_MODE
+  const originalApiKey = process.env.OPENAI_API_KEY
 
   beforeEach(() => {
+    delete process.env.DEMO_MODE
+    delete process.env.OPENAI_API_KEY
     app = buildApp()
   })
 
   afterEach(async () => {
     await app.close()
+  })
+
+  afterAll(() => {
+    if (originalDemoMode === undefined) delete process.env.DEMO_MODE
+    else process.env.DEMO_MODE = originalDemoMode
+    if (originalApiKey === undefined) delete process.env.OPENAI_API_KEY
+    else process.env.OPENAI_API_KEY = originalApiKey
   })
 
   it('reports a healthy service', async () => {
@@ -99,7 +110,7 @@ describe('Threadline backend skeleton', () => {
     expect(response.json().error.code).toBe('files_required')
   })
 
-  it('validates JSON and Markdown sources without processing them', async () => {
+  it('explains when extraction is not configured after source validation', async () => {
     const response = await app.inject({
       method: 'POST',
       url: '/imports',
@@ -117,30 +128,20 @@ describe('Threadline backend skeleton', () => {
       ]),
     })
 
-    expect(response.statusCode).toBe(200)
-    expect(response.json()).toMatchObject({
-      sources: [
-        {
-          file: 'conversation.json',
-          format: 'json',
-          status: 'validated',
-        },
-        {
-          file: 'notes.md',
-          format: 'markdown',
-          status: 'validated',
-        },
-      ],
-      entries: [],
-      errors: [],
+    expect(response.statusCode).toBe(503)
+    expect(response.json()).toEqual({
+      error: {
+        code: 'extraction_unavailable',
+        message: 'Extraction is unavailable. Enable DEMO_MODE=true or configure OPENAI_API_KEY in the backend environment, then restart the backend.',
+      },
     })
-    expect(response.json().sources.every((source: Record<string, unknown>) => !('content' in source))).toBe(
-      true,
-    )
-    expect(response.json().importId).toMatch(/^import-/)
   })
 
-  it('returns valid sources alongside safe per-file errors', async () => {
+  it('returns valid sources alongside safe per-file errors in Demo Mode', async () => {
+    await app.close()
+    process.env.DEMO_MODE = 'true'
+    app = buildApp()
+
     const response = await app.inject({
       method: 'POST',
       url: '/imports',
@@ -155,6 +156,7 @@ describe('Threadline backend skeleton', () => {
 
     expect(response.statusCode).toBe(200)
     expect(response.json().sources).toHaveLength(1)
+    expect(response.json().entries).toHaveLength(5)
     expect(response.json().errors).toEqual([
       {
         file: 'broken.json',
