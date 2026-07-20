@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
-import { ImportRequestError, importSources } from './imports'
+import { ImportRequestError, importSources, reviewEntry } from './imports'
 
 function jsonResponse(body: unknown, status = 200): Response {
   return {
@@ -91,5 +91,40 @@ describe('importSources', () => {
         status: 200,
       }),
     )
+  })
+
+  it('sends review updates with optional date metadata', async () => {
+    const responseBody = {
+      id: 'entry-001',
+      type: 'event',
+      content: 'Jordan started a fictional ceramics course in March 2026.',
+      status: 'edited',
+      date: {
+        original: 'March 2026',
+        normalized: '2026-03',
+        precision: 'month' as const,
+        timezone: 'Europe/Madrid',
+      },
+      sourceReferences: [{ file: 'notes.md', location: 'lines 1-2' }],
+    }
+    const fetchMock = vi.fn().mockResolvedValue(jsonResponse(responseBody))
+    vi.stubGlobal('fetch', fetchMock)
+
+    await expect(
+      reviewEntry('entry-001', 'edited', {
+        content: responseBody.content,
+        date: responseBody.date,
+      }),
+    ).resolves.toEqual(responseBody)
+
+    expect(fetchMock).toHaveBeenCalledWith('/api/entries/entry-001', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        status: 'edited',
+        content: responseBody.content,
+        date: responseBody.date,
+      }),
+    })
   })
 })

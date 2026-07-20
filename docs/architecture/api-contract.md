@@ -1,6 +1,6 @@
-# Threadline API contract (initial)
+# Threadline API contract
 
-> Status: **in progress**. Technical import validation exists, but semantic extraction, review state, and real session exports are not implemented yet.
+> Status: **implemented for the local MVP**. The contract still favors synchronous processing and temporary in-memory state.
 
 ## Purpose
 
@@ -21,11 +21,11 @@ The initial contract covers import, GPT-5.6 processing, review mutation, and exp
 
 Accepts one or more JSON or Markdown files, performs lightweight technical validation, sends the source content to GPT-5.6 through the backend for semantic interpretation, and returns the extracted entries in `pending` status.
 
-#### Current implementation stage
+#### Current implementation
 
-The current endpoint implements only the deterministic first half of this contract. It receives multipart files, enforces the MVP limits, validates UTF-8 and file extensions, parses JSON syntax, and returns per-file results. It does not call OpenAI or retain source content after the response.
+The endpoint receives multipart files, enforces the MVP limits, validates UTF-8 and file extensions, parses JSON syntax, prepares bounded extraction requests, and returns per-file results plus proposed entries. With `DEMO_MODE=true`, it returns deterministic synthetic proposals without contacting OpenAI. With `DEMO_MODE=false` and a configured backend key, it calls OpenAI from the backend only.
 
-A technically valid source currently has the source status `validated`. This is not an entry review status and does not add to or replace `pending`, `accepted`, `edited`, or `rejected`. Until semantic extraction is implemented, the endpoint returns `entries: []`.
+A technically valid source has the source status `validated`. This is not an entry review status and does not add to or replace `pending`, `accepted`, `edited`, or `rejected`.
 
 Current response example:
 
@@ -223,7 +223,13 @@ Applies one review decision to an entry in the current session. The route is int
 ```json
 {
   "status": "edited",
-  "content": "Updated fictional context statement."
+  "content": "Updated fictional context statement.",
+  "date": {
+    "original": "March 2026",
+    "normalized": "2026-03",
+    "precision": "month",
+    "timezone": "Europe/Madrid"
+  }
 }
 ```
 
@@ -233,6 +239,7 @@ Rules:
 - `pending` is an extraction/review state and is not a user decision sent by this route.
 - `content` is required when `status` is `edited` and is optional for `accepted` or `rejected`.
 - `content` must be a non-empty string when provided.
+- `date` is optional and may be supplied when `status` is `edited`; when present, it must match the canonical date contract.
 - The backend preserves the entry's `sourceReferences`.
 
 #### Success response
@@ -243,11 +250,11 @@ Rules:
 
 #### Expected errors
 
-- `400 Bad Request`: invalid status or missing/invalid edited content.
+- `400 Bad Request`: invalid status, missing/invalid edited content, or invalid date metadata.
 - `404 Not Found`: no entry with that `id` exists in the current session.
 - `409 Conflict`: the entry changed between the frontend read and this update.
 
-The route skeleton uses the shared `{ "error": { "code", "message" } }` envelope. Runtime validation details remain pending until temporary review state is implemented.
+The route uses the shared `{ "error": { "code", "message" } }` envelope.
 
 ## Does this cover every user action?
 

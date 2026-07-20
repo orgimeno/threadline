@@ -19,13 +19,21 @@ export interface ImportResponse {
 }
 
 export type EntryStatus = 'pending' | 'accepted' | 'edited' | 'rejected'
+export type DatePrecision = 'minute' | 'hour' | 'day' | 'month' | 'year' | 'unknown'
+
+export interface ThreadlineDate {
+  original: string | null
+  normalized: string | null
+  precision: DatePrecision
+  timezone: string | null
+}
 
 export interface ContextEntry {
   id: string
   type: string
   content: string
   status: EntryStatus
-  date: { original: string | null; normalized: string | null; precision: string; timezone: string | null }
+  date: ThreadlineDate
   sourceReferences: Array<{ file: string; location: string }>
 }
 
@@ -141,9 +149,14 @@ export async function importSources(files: readonly File[]): Promise<ImportRespo
   return body
 }
 
-export async function reviewEntry(id: string, status: Exclude<EntryStatus, 'pending'>, content?: string): Promise<ContextEntry> {
+export interface ReviewEntryUpdate {
+  content?: string
+  date?: ThreadlineDate
+}
+
+export async function reviewEntry(id: string, status: Exclude<EntryStatus, 'pending'>, update: ReviewEntryUpdate = {}): Promise<ContextEntry> {
   const response = await fetch(`${apiBaseUrl}/entries/${encodeURIComponent(id)}`, {
-    method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ status, content }),
+    method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ status, ...update }),
   })
   const body = await responseBody(response)
   if (!response.ok || !isContextEntry(body)) throw requestError(response, body)

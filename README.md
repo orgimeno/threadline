@@ -78,7 +78,7 @@ Communication will use a REST API. Files and state will exist only during the in
 
 The backend calls the Responses API with `gpt-5.6-terra` and a structured-output schema. Each request contains readable source content and source metadata; the model returns proposals, never irreversible final context. The backend validates the schema and locators, associates proposals with sources, and places each proposal in `pending` status for human review.
 
-The live path uses bounded inputs, a 60-second timeout, one SDK retry, and safe errors. See the [GPT-5.6 model documentation](https://developers.openai.com/api/docs/models/gpt-5.6-sol).
+The live path uses bounded inputs, a 60-second timeout, one SDK retry, safe errors, and `store: false` so Responses API application state is not retained for the extraction response. `OPENAI_MODEL` selects the model at runtime and falls back to `gpt-5.6-terra` only when the variable is missing or blank. See the [GPT-5.6 Terra model documentation](https://developers.openai.com/api/docs/models/gpt-5.6-terra).
 
 ## Stack
 

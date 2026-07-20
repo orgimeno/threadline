@@ -6,12 +6,19 @@ import {
   importSources,
   reviewEntry,
   exportContext,
+  type DatePrecision,
   type ContextEntry,
   type ImportResponse,
   type SourceImportError,
+  type ThreadlineDate,
 } from './api/imports'
 
 type ImportState = 'idle' | 'submitting' | 'success' | 'error'
+type ReviewStatus = 'accepted' | 'edited' | 'rejected'
+type ReviewFeedback = 'positive' | 'negative' | null
+
+const datePrecisions: DatePrecision[] = ['unknown', 'year', 'month', 'day', 'hour', 'minute']
+const reviewFeedbackDelayMs = 420
 
 const selectedFiles = ref<File[]>([])
 const importState = ref<ImportState>('idle')
@@ -20,8 +27,14 @@ const importError = ref<ImportRequestError | null>(null)
 const sourceInput = ref<HTMLInputElement | null>(null)
 const entries = ref<ContextEntry[]>([])
 const editedContent = ref('')
+const editedDateOriginal = ref('')
+const editedDateNormalized = ref('')
+const editedDatePrecision = ref<DatePrecision>('unknown')
+const editedDateTimezone = ref('')
 const reviewError = ref<string | null>(null)
 const isEditing = ref(false)
+const isReviewing = ref(false)
+const reviewFeedback = ref<ReviewFeedback>(null)
 const selectedEntryId = ref<string | null>(null)
 
 const hasSelectedSources = computed(() => selectedFiles.value.length > 0)
@@ -35,6 +48,7 @@ const currentIndex = computed(() => currentEntry.value === null ? -1 : entries.v
 const pendingCount = computed(() => entries.value.filter((entry) => entry.status === 'pending').length)
 const approvedCount = computed(() => entries.value.filter((entry) => entry.status === 'accepted' || entry.status === 'edited').length)
 const reviewComplete = computed(() => entries.value.length > 0 && pendingCount.value === 0)
+const reviewFeedbackLabel = computed(() => reviewFeedback.value === 'negative' ? 'Rejected' : 'Saved')
 const importButtonLabel = computed(() => {
   if (isSubmitting.value) {
     return 'Validating sources…'
@@ -46,6 +60,33 @@ const importButtonLabel = computed(() => {
 
   return 'Validate selected sources'
 })
+
+function wait(ms: number): Promise<void> {
+  return new Promise((resolve) => window.setTimeout(resolve, ms))
+}
+
+function setEditForm(entry: ContextEntry | null) {
+  editedContent.value = entry?.content ?? ''
+  editedDateOriginal.value = entry?.date.original ?? ''
+  editedDateNormalized.value = entry?.date.normalized ?? ''
+  editedDatePrecision.value = entry?.date.precision ?? 'unknown'
+  editedDateTimezone.value = entry?.date.timezone ?? ''
+}
+
+function editedDate(): ThreadlineDate {
+  return {
+    original: editedDateOriginal.value.trim() || null,
+    normalized: editedDateNormalized.value.trim() || null,
+    precision: editedDatePrecision.value,
+    timezone: editedDateTimezone.value.trim() || null,
+  }
+}
+
+function displayDate(date: ThreadlineDate): string {
+  const value = date.normalized ?? date.original
+  if (value === null) return 'No date supplied'
+  return date.timezone === null ? value : `${value} · ${date.timezone}`
+}
 
 function resetImportOutcome() {
   importState.value = 'idle'
@@ -83,8 +124,9 @@ async function submitImport() {
     importResult.value = await importSources(selectedFiles.value)
     entries.value = importResult.value.entries
     selectedEntryId.value = entries.value[0]?.id ?? null
-    editedContent.value = currentEntry.value?.content ?? ''
+    setEditForm(currentEntry.value)
     isEditing.value = false
+    reviewFeedback.value = null
     importState.value = 'success'
   } catch (error) {
     importError.value =
@@ -99,31 +141,44 @@ async function submitImport() {
   }
 }
 
-async function decide(status: 'accepted' | 'edited' | 'rejected') {
-  if (currentEntry.value === null) return
+async function decide(status: ReviewStatus) {
+  if (currentEntry.value === null || isReviewing.value) return
   reviewError.value = null
+  isReviewing.value = true
   try {
-    const updated = await reviewEntry(currentEntry.value.id, status, status === 'edited' ? editedContent.value : undefined)
+    const updated = await reviewEntry(
+      currentEntry.value.id,
+      status,
+      status === 'edited' ? { content: editedContent.value, date: editedDate() } : {},
+    )
     entries.value = entries.value.map((entry) => entry.id === updated.id ? updated : entry)
+    reviewFeedback.value = status === 'rejected' ? 'negative' : 'positive'
+    await wait(reviewFeedbackDelayMs)
     selectedEntryId.value = entries.value.find((entry) => entry.status === 'pending')?.id ?? updated.id
-    editedContent.value = currentEntry.value?.content ?? ''
+    setEditForm(currentEntry.value)
     isEditing.value = false
-  } catch (error) { reviewError.value = error instanceof Error ? error.message : 'Could not save this review decision.' }
+  } catch (error) {
+    reviewError.value = error instanceof Error ? error.message : 'Could not save this review decision.'
+  } finally {
+    reviewFeedback.value = null
+    isReviewing.value = false
+  }
 }
 
 function startEditing() {
-  if (currentEntry.value !== null) editedContent.value = currentEntry.value.content
+  setEditForm(currentEntry.value)
   isEditing.value = true
 }
 
 function cancelEditing() {
-  editedContent.value = currentEntry.value?.content ?? ''
+  setEditForm(currentEntry.value)
   isEditing.value = false
 }
 
 function selectEntry(id: string) {
+  if (isReviewing.value) return
   selectedEntryId.value = id
-  editedContent.value = currentEntry.value?.content ?? ''
+  setEditForm(currentEntry.value)
   isEditing.value = false
   reviewError.value = null
 }
@@ -235,6 +290,10 @@ function formatFileSize(bytes: number): string {
           >
             {{ importButtonLabel }}
           </button>
+          <p v-if="isSubmitting" class="processing-indicator" role="status" aria-live="polite">
+            <span class="loading-dots" aria-hidden="true"><i></i><i></i><i></i></span>
+            <span>Extracting context. Larger sources can take a moment.</span>
+          </p>
 
           <div
             v-if="importState === 'success' && importResult !== null"
@@ -328,41 +387,74 @@ function formatFileSize(bytes: number): string {
                 <span>{{ pendingCount }} pending</span>
               </div>
               <div class="entry-navigator" aria-label="Recognized entries">
-                <button v-for="(entry, index) in entries" :key="entry.id" type="button" :class="['nav-entry', { active: entry.id === currentEntry.id, done: entry.status !== 'pending' }]" @click="selectEntry(entry.id)">
+                <button v-for="(entry, index) in entries" :key="entry.id" type="button" :disabled="isReviewing" :class="['nav-entry', { active: entry.id === currentEntry.id, done: entry.status !== 'pending' }]" @click="selectEntry(entry.id)">
                   {{ index + 1 }}
                 </button>
               </div>
-            <div class="review-card">
-              <div class="review-card-header">
-                <span class="entry-type">{{ currentEntry.type }}</span>
-                <span class="entry-id">{{ currentEntry.id }}</span>
-              </div>
-              <p class="review-prompt">Keep this in your portable context?</p>
-              <p v-if="!isEditing" class="entry-content">{{ currentEntry.content }}</p>
-              <textarea v-else v-model="editedContent" class="entry-editor" aria-label="Edit entry content"></textarea>
-              <p class="entry-date">{{ currentEntry.date.normalized ?? currentEntry.date.original ?? 'No date supplied' }}</p>
-              <div class="evidence">
-                <span class="evidence-label">Source evidence</span>
-                <ul>
-                  <li v-for="reference in currentEntry.sourceReferences" :key="`${reference.file}-${reference.location}`">
-                    <strong>{{ reference.file }}</strong><code>{{ reference.location }}</code>
-                  </li>
-                </ul>
-              </div>
-              <div v-if="!isEditing" class="review-actions">
-                <button class="accept-action" type="button" @click="decide('accepted')">Accept</button>
-                <button class="edit-action" type="button" @click="startEditing">Edit</button>
-                <button class="reject-action" type="button" @click="decide('rejected')">Reject</button>
-              </div>
-              <div v-else class="review-actions">
-                <button class="accept-action" type="button" @click="decide('edited')">Save edit</button>
-                <button class="edit-action" type="button" @click="cancelEditing">Cancel</button>
-              </div>
-              <p v-if="reviewError" class="request-error">{{ reviewError }}</p>
-            </div>
+              <Transition name="entry-card" mode="out-in">
+                <div :key="currentEntry.id" class="review-card">
+                  <div
+                    v-if="reviewFeedback !== null"
+                    :class="['decision-feedback', reviewFeedback]"
+                    role="status"
+                    aria-live="polite"
+                  >
+                    <span aria-hidden="true">{{ reviewFeedback === 'negative' ? '×' : '✓' }}</span>
+                    <strong>{{ reviewFeedbackLabel }}</strong>
+                  </div>
+                  <div class="review-card-header">
+                    <span class="entry-type">{{ currentEntry.type }}</span>
+                    <span class="entry-id">{{ currentEntry.id }}</span>
+                  </div>
+                  <p class="review-prompt">Keep this in your portable context?</p>
+                  <p v-if="!isEditing" class="entry-content">{{ currentEntry.content }}</p>
+                  <textarea v-else v-model="editedContent" class="entry-editor" aria-label="Edit entry content"></textarea>
+                  <p v-if="!isEditing" class="entry-date">{{ displayDate(currentEntry.date) }}</p>
+                  <div v-else class="date-editor" aria-label="Edit entry date metadata">
+                    <label>
+                      <span>Source date text</span>
+                      <input v-model="editedDateOriginal" placeholder="March 2026" />
+                    </label>
+                    <label>
+                      <span>Normalized date</span>
+                      <input v-model="editedDateNormalized" placeholder="2026-03 or 2026-03-12T09:30" />
+                    </label>
+                    <label>
+                      <span>Precision</span>
+                      <select v-model="editedDatePrecision">
+                        <option v-for="precision in datePrecisions" :key="precision" :value="precision">
+                          {{ precision }}
+                        </option>
+                      </select>
+                    </label>
+                    <label>
+                      <span>Timezone</span>
+                      <input v-model="editedDateTimezone" placeholder="Europe/Madrid" />
+                    </label>
+                  </div>
+                  <div class="evidence">
+                    <span class="evidence-label">Source evidence</span>
+                    <ul>
+                      <li v-for="reference in currentEntry.sourceReferences" :key="`${reference.file}-${reference.location}`">
+                        <strong>{{ reference.file }}</strong><code>{{ reference.location }}</code>
+                      </li>
+                    </ul>
+                  </div>
+                  <div v-if="!isEditing" class="review-actions">
+                    <button class="accept-action" type="button" :disabled="isReviewing" @click="decide('accepted')">Accept</button>
+                    <button class="edit-action" type="button" :disabled="isReviewing" @click="startEditing">Edit</button>
+                    <button class="reject-action" type="button" :disabled="isReviewing" @click="decide('rejected')">Reject</button>
+                  </div>
+                  <div v-else class="review-actions">
+                    <button class="accept-action" type="button" :disabled="isReviewing" @click="decide('edited')">Save edit</button>
+                    <button class="edit-action" type="button" :disabled="isReviewing" @click="cancelEditing">Cancel</button>
+                  </div>
+                  <p v-if="reviewError" class="request-error">{{ reviewError }}</p>
+                </div>
+              </Transition>
               <div class="review-pagination">
-                <button type="button" :disabled="currentIndex === 0" @click="moveEntry(-1)">← Previous</button>
-                <button type="button" :disabled="currentIndex === entries.length - 1" @click="moveEntry(1)">Next →</button>
+                <button type="button" :disabled="currentIndex === 0 || isReviewing" @click="moveEntry(-1)">← Previous</button>
+                <button type="button" :disabled="currentIndex === entries.length - 1 || isReviewing" @click="moveEntry(1)">Next →</button>
               </div>
             </div>
             <div class="status-legend" aria-label="Available review states">

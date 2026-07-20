@@ -2,6 +2,22 @@
 
 This log records product and technical decisions. Valid statuses are `planned`, `in progress`, and `implemented`.
 
+## 2026-07-20 — Improve review feedback and editable date metadata
+
+- **Problem/question:** How can the review queue make long extraction waits and review actions feel responsive, and how can a user correct an entry that has no extracted date?
+- **Decision:** show an explicit processing indicator while import/extraction is pending, add short accept/edit/reject feedback before advancing the queue, and let edited entries update date metadata through the existing canonical `date` object.
+- **Reason:** the MVP must remain understandable during slow model calls, and users need a controlled way to correct missing dates without adding edit history or changing the canonical schema.
+- **Codex contribution:** implemented the frontend interaction, extended the review API to accept validated date metadata for edited entries, and added regression tests for the UI, API client, and temporary session store.
+- **Pending:** run a manual browser pass with fictional sources and decide whether the demo extractor should produce richer synthetic entries for judges.
+
+## 2026-07-20 — Make live extraction stateless and model configuration explicit
+
+- **Problem/question:** How can Threadline prevent Responses API application-state retention and make it unambiguous that the configured model overrides the fallback?
+- **Decision:** send `store: false` on the single Responses API call site, resolve `OPENAI_MODEL` before constructing the extractor, and use `gpt-5.6-terra` only when the environment value is missing or blank.
+- **Reason:** imported conversations can contain personal context, and runtime configuration must remain predictable and auditable.
+- **Codex contribution:** reviewed the user-provided privacy change, clarified that extraction and structured output occur in one request per source, refactored model resolution, and added regression coverage for both behaviors.
+- **Pending:** decide whether a future bring-your-own-key flow should be local-only or accept an ephemeral key through a hardened backend session; no browser key flow is implemented.
+
 ## 2026-07-20 — Finish the hackathon-ready MVP and judge path
 
 - **Problem/question:** What is the smallest complete product loop that remains easy to judge without sharing a private API key?

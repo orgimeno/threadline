@@ -2,7 +2,13 @@ import { flushPromises, mount, type VueWrapper } from '@vue/test-utils'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import App from './App.vue'
-import { ImportRequestError, importSources, type ImportResponse } from './api/imports'
+import {
+  ImportRequestError,
+  importSources,
+  reviewEntry,
+  type ContextEntry,
+  type ImportResponse,
+} from './api/imports'
 
 vi.mock('./api/imports', async (importOriginal) => {
   const actual = await importOriginal<typeof import('./api/imports')>()
@@ -10,10 +16,26 @@ vi.mock('./api/imports', async (importOriginal) => {
   return {
     ...actual,
     importSources: vi.fn(),
+    reviewEntry: vi.fn(),
   }
 })
 
 const importSourcesMock = vi.mocked(importSources)
+const reviewEntryMock = vi.mocked(reviewEntry)
+
+const pendingEntry: ContextEntry = {
+  id: 'entry-001',
+  type: 'event',
+  content: 'Jordan started a fictional ceramics course.',
+  status: 'pending',
+  date: {
+    original: null,
+    normalized: null,
+    precision: 'unknown',
+    timezone: null,
+  },
+  sourceReferences: [{ file: 'notes.md', location: 'lines 1-2' }],
+}
 
 async function selectFiles(wrapper: VueWrapper, files: File[]) {
   const input = wrapper.get('[data-testid="source-input"]')
@@ -28,6 +50,7 @@ async function selectFiles(wrapper: VueWrapper, files: File[]) {
 describe('Threadline application shell', () => {
   beforeEach(() => {
     importSourcesMock.mockReset()
+    reviewEntryMock.mockReset()
   })
 
   it('shows the product workflow with import disabled until files are selected', () => {
@@ -133,6 +156,7 @@ describe('Threadline application shell', () => {
 
     expect(wrapper.get('[data-testid="import-button"]').text()).toContain('Validating sources')
     expect(wrapper.get('[data-testid="import-button"]').attributes('disabled')).toBeDefined()
+    expect(wrapper.get('[role="status"]').text()).toContain('Extracting context')
 
     resolveImport?.({
       importId: 'import-test',
@@ -141,5 +165,46 @@ describe('Threadline application shell', () => {
       errors: [],
     })
     await flushPromises()
+  })
+
+  it('allows an edited entry to add date metadata', async () => {
+    const result: ImportResponse = {
+      importId: 'import-test',
+      sources: [],
+      entries: [pendingEntry],
+      errors: [],
+    }
+    const updatedEntry: ContextEntry = {
+      ...pendingEntry,
+      status: 'edited',
+      content: 'Jordan started a fictional ceramics course in March 2026.',
+      date: {
+        original: 'March 2026',
+        normalized: '2026-03',
+        precision: 'month',
+        timezone: 'Europe/Madrid',
+      },
+    }
+    importSourcesMock.mockResolvedValue(result)
+    reviewEntryMock.mockResolvedValue(updatedEntry)
+    const wrapper = mount(App)
+
+    await selectFiles(wrapper, [new File(['# Notes'], 'notes.md')])
+    await wrapper.get('[data-testid="import-button"]').trigger('click')
+    await flushPromises()
+    await wrapper.get('.edit-action').trigger('click')
+    await wrapper.get('.entry-editor').setValue(updatedEntry.content)
+
+    const inputs = wrapper.findAll('.date-editor input')
+    await inputs[0]!.setValue('March 2026')
+    await inputs[1]!.setValue('2026-03')
+    await wrapper.get('.date-editor select').setValue('month')
+    await inputs[2]!.setValue('Europe/Madrid')
+    await wrapper.get('.accept-action').trigger('click')
+
+    expect(reviewEntryMock).toHaveBeenCalledWith('entry-001', 'edited', {
+      content: updatedEntry.content,
+      date: updatedEntry.date,
+    })
   })
 })

@@ -8,6 +8,13 @@ const MAX_SOURCE_TOKENS = 12_000
 const MAX_IMPORT_TOKENS = 24_000
 const MAX_OUTPUT_TOKENS = 4_000
 
+export const DEFAULT_OPENAI_MODEL = 'gpt-5.6-terra'
+
+export function resolveOpenAIModel(value: string | undefined): string {
+  const model = value?.trim()
+  return model === undefined || model.length === 0 ? DEFAULT_OPENAI_MODEL : model
+}
+
 export class ExtractionError extends Error {}
 
 export interface ExtractionService {
@@ -48,7 +55,7 @@ function locatorExists(request: PreparedExtractionRequest, file: string, locatio
 
 export class OpenAIExtractor {
   private readonly client: OpenAI
-  constructor(apiKey: string, private readonly model = 'gpt-5.6-terra') {
+  constructor(apiKey: string, private readonly model: string) {     // `model = 'gpt-5.6-terra'` for Openai build week
     this.client = new OpenAI({ apiKey, timeout: 60_000, maxRetries: 1 })
   }
 
@@ -61,10 +68,11 @@ export class OpenAIExtractor {
     for (const request of requests) {
       let response: { output_text: string }
       try {
-        response = await this.client.responses.create({
+        response = await this.client.responses.create({     //Openai request
           model: this.model,
           instructions: request.instruction,
           input: `Source file: ${request.source.file}\nFormat: ${request.source.format}\nLocator strategy: ${request.source.locatorStrategy}\n<source>\n${request.source.content}\n</source>`,
+          store: false,
           max_output_tokens: MAX_OUTPUT_TOKENS,
           text: { format: { type: 'json_schema', name: request.schemaName, strict: true, schema: request.schema } },
         } as never) as { output_text: string }
