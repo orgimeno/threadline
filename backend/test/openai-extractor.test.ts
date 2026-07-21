@@ -116,6 +116,40 @@ describe('OpenAI extraction adapter', () => {
     })
   })
 
+  it('normalizes common ISO seconds and numeric offsets before validating model output', async () => {
+    const sourceResult = validateSource(
+      'fictional-conversation.json',
+      'files',
+      Buffer.from('{"messages":[{"content":"Fictional event."}]}'),
+    )
+    expect(sourceResult.source).toBeDefined()
+    createResponse.mockResolvedValue({
+      output_text: JSON.stringify({
+        entries: [{
+          type: 'event',
+          content: 'Fictional event.',
+          date: {
+            original: '2031-04-02T09:15:00+02:00',
+            normalized: '2031-04-02T09:15:00+02:00',
+            precision: 'minute',
+            timezone: '+02:00',
+          },
+          sourceReferences: [{ file: 'fictional-conversation.json', location: '/messages/0/content' }],
+        }],
+      }),
+    })
+
+    const extractor = new OpenAIExtractor('test-api-key', 'gpt-5.6-terra-test')
+    const entries = await extractor.extract(prepareExtractionRequests([sourceResult.source!]))
+
+    expect(entries[0]?.date).toEqual({
+      original: '2031-04-02T09:15:00+02:00',
+      normalized: '2031-04-02T09:15',
+      precision: 'minute',
+      timezone: null,
+    })
+  })
+
   it('uses the environment value when present and one explicit fallback otherwise', () => {
     expect(resolveOpenAIModel('gpt-5.6-sol')).toBe('gpt-5.6-sol')
     expect(resolveOpenAIModel('  gpt-5.6-luna  ')).toBe('gpt-5.6-luna')

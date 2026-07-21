@@ -68,6 +68,23 @@ describe('Threadline runtime schema', () => {
     })
   })
 
+  it('accepts dates with year, month, day, hour, and minute precision', () => {
+    const dateCases = [
+      { original: '2031', normalized: '2031', precision: 'year' as const },
+      { original: 'April 2031', normalized: '2031-04', precision: 'month' as const },
+      { original: 'April 2, 2031', normalized: '2031-04-02', precision: 'day' as const },
+      { original: 'April 2, 2031 at 09:00', normalized: '2031-04-02T09', precision: 'hour' as const },
+      { original: 'April 2, 2031 at 09:15', normalized: '2031-04-02T09:15', precision: 'minute' as const },
+    ]
+
+    for (const date of dateCases) {
+      const document = canonicalDocument()
+      document.entries[0]!.date = { ...date, timezone: null }
+
+      expect(validateThreadlineDocument(document).valid).toBe(true)
+    }
+  })
+
   it('rejects invented or inconsistent normalized dates', () => {
     const document = canonicalDocument()
     document.entries[0]!.date.normalized = '2031-02-29T16:30'

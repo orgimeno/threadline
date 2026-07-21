@@ -56,6 +56,45 @@ function estimatedTokens(value: string): number {
   return Math.ceil(value.length / 4)
 }
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null
+}
+
+/**
+ * GPT can return standard ISO timestamps with seconds and numeric offsets even
+ * when Threadline's canonical form deliberately stores minute precision and
+ * IANA zones only. This lossless boundary normalization keeps the original
+ * evidence while converting that common representation to the canonical form.
+ */
+function normalizeModelDate(date: Record<string, unknown>): Record<string, unknown> {
+  const normalized = date.normalized
+  const precision = date.precision
+  const timezone = date.timezone
+  const minuteTimestamp = typeof normalized === 'string' && precision === 'minute'
+    ? /^(\d{4}-\d{2}-\d{2}T\d{2}:\d{2})(?::\d{2}(?:\.\d+)?)?(?:Z|[+-]\d{2}:\d{2})?$/.exec(normalized)
+    : null
+  const numericOffset = typeof timezone === 'string' && /^(?:Z|[+-]\d{2}:\d{2})$/.test(timezone)
+
+  return {
+    ...date,
+    ...(minuteTimestamp === null ? {} : { normalized: minuteTimestamp[1] }),
+    ...(numericOffset ? { timezone: null } : {}),
+  }
+}
+
+function normalizeModelProposal(value: unknown): unknown {
+  if (!isRecord(value) || !Array.isArray(value.entries)) return value
+
+  return {
+    ...value,
+    entries: value.entries.map((entry) =>
+      isRecord(entry) && isRecord(entry.date)
+        ? { ...entry, date: normalizeModelDate(entry.date) }
+        : entry,
+    ),
+  }
+}
+
 function locatorExists(request: PreparedExtractionRequest, file: string, location: string): boolean {
   if (file !== request.source.file) return false
   if (request.source.format === 'markdown') {
@@ -103,7 +142,7 @@ export class OpenAIExtractor {
         throw new ExtractionError(safeOpenAIError(error), { cause: error })
       }
       let raw: unknown
-      try { raw = JSON.parse(response.output_text) } catch { throw new ExtractionError('OpenAI returned an invalid structured response.') }
+      try { raw = normalizeModelProposal(JSON.parse(response.output_text)) } catch { throw new ExtractionError('OpenAI returned an invalid structured response.') }
       const proposal = validateExtractionProposal(raw)
       if (!proposal.valid) {
         throw new ExtractionError('OpenAI returned structured entries with invalid fields or source references.', {
