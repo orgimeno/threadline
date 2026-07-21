@@ -1,0 +1,23 @@
+AI conversations are useful while they are open, but the context that matters can end up scattered across many exports, formats, and tools.
+
+Threadline is my attempt to make that context portable without giving up human control.
+
+Here I import two personal Build Week notes: a JSON conversation export and a Markdown note. The app accepts both formats together, validates the files, and sends valid sources to the backend.
+
+That boundary matters. The browser never receives an OpenAI API key. The backend checks basic file limits, UTF-8, and JSON syntax first. If a source cannot be processed, Threadline reports that source and the reason instead of failing silently.
+
+The backend uses the OpenAI Responses API with GPT-5.6 to propose structured context entries. Every entry includes a type, a date when one is supported by the source, and a traceable reference back to its original file and location.
+
+For JSON, that location is a standard JSON Pointer. For Markdown, it is a visible line range. That makes the proposal inspectable rather than asking the user to trust a black box.
+
+Threadline does not silently turn a model response into memory. Instead, it presents a review queue. I can accept an entry, edit its wording, or reject it entirely. Here, I keep the important Build Week milestones, improve one summary, and reject a deliberately silly idea about using three dramatic robots as narrators.
+
+If I change my mind, I can reopen a reviewed entry. The final context is built only from the decisions I make, then exported as either JSON or Markdown.
+
+The project also includes a no-key Demo Mode. It gives judges a repeatable way to explore import, review, and export without exposing anyone's credentials or consuming an API budget. This recording uses the live path so the actual GPT-5.6 extraction is visible.
+
+Codex helped throughout this project: from shaping the product and canonical schema, to building the Vue frontend, Fastify backend, tests, documentation, and this demo flow.
+
+GPT-5.6 provides the interpretation and extraction. Threadline provides validation, provenance, and the final human decision.
+
+The result is a small but working workflow for turning scattered AI context into something structured, traceable, and genuinely under the user's control.

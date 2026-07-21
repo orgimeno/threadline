@@ -1,0 +1,25 @@
+{
+  "conversation_id": "threadline-build-week-personal-notes-2026",
+  "title": "Threadline Build Week — personal project notes",
+  "exported_at": "2026-07-18T18:20:00+02:00",
+  "messages": [
+    {
+      "id": "m-001",
+      "role": "user",
+      "created_at": "2026-07-17T19:30:00+02:00",
+      "content": "On Friday, July 17, 2026, I decided to enter OpenAI Build Week with Threadline, an idea to help me recover useful context from old AI conversations."
+    },
+    {
+      "id": "m-002",
+      "role": "user",
+      "created_at": "2026-07-18T09:10:00+02:00",
+      "content": "On Saturday, July 18, 2026, I build the Threadline MVP."
+    },
+    {
+      "id": "m-003",
+      "role": "user",
+      "created_at": "2026-07-18T15:40:00+02:00",
+      "content": "During that Saturday, Codex helped me build the first Threadline frontend with Vue and the backend with Fastify and TypeScript."
+    }
+  ]
+}

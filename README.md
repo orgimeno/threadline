@@ -98,7 +98,7 @@ Codex helped inspect the repository, define the MVP boundary, document the first
 
 ## Fictional examples
 
-The files in [examples/sample-input](examples/sample-input) and [examples/sample-output](examples/sample-output) are entirely fictional. They contain no real conversation exports or personal data, and illustrate mixed input and consolidated final context. For a richer live-demo import, use `fictional-harbor-conversation.json` together with `fictional-harbor-project-notes.md`; they deliberately overlap on a few project decisions without claiming automatic duplicate resolution.
+The files in [examples/sample-input](examples/sample-input) and [examples/sample-output](examples/sample-output) are entirely fictional. They contain no real conversation exports or personal data, and illustrate mixed input and consolidated final context. For a richer live-demo import, use `fictional-harbor-conversation.json` together with `fictional-harbor-project-notes.md`; they deliberately overlap on a few project decisions without claiming automatic duplicate resolution. For a Build Week video, `threadline-build-week-conversation.json` and `threadline-build-week-notes.md` provide a safe, project-relevant demo narrative.
 
 ## Running Threadline locally
 
