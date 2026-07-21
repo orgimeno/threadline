@@ -242,6 +242,27 @@ describe('Threadline application shell', () => {
     })
   })
 
+  it('renders normalized timestamps without the ISO T separator', async () => {
+    const datedEntry: ContextEntry = {
+      ...pendingEntry,
+      date: {
+        original: 'May 6, 2031 at 10:00 in Europe/Madrid',
+        normalized: '2031-05-06T10:00',
+        precision: 'minute',
+        timezone: 'Europe/Madrid',
+      },
+    }
+    importSourcesMock.mockResolvedValue({ importId: 'import-test', sources: [], entries: [datedEntry], errors: [] })
+    const wrapper = mount(App)
+
+    await selectFiles(wrapper, [new File(['# Notes'], 'notes.md')])
+    await wrapper.get('[data-testid="import-button"]').trigger('click')
+    await flushPromises()
+
+    expect(wrapper.text()).toContain('2031-05-06 10:00 · Europe/Madrid')
+    expect(wrapper.text()).not.toContain('2031-05-06T10:00')
+  })
+
   it('hides review actions after a decision and can reopen the entry', async () => {
     const acceptedEntry: ContextEntry = { ...pendingEntry, status: 'accepted' }
     importSourcesMock.mockResolvedValue({ importId: 'import-test', sources: [], entries: [acceptedEntry], errors: [] })

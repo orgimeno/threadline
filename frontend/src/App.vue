@@ -69,7 +69,8 @@ function setEditForm(entry: ContextEntry | null) {
 function displayDate(date: ThreadlineDate): string {
   const value = date.normalized ?? date.original
   if (value === null) return 'No date supplied'
-  return date.timezone === null ? value : `${value} · ${date.timezone}`
+  const readableValue = value.replace('T', ' ')
+  return date.timezone === null ? readableValue : `${readableValue} · ${date.timezone}`
 }
 
 function resetImportOutcome() {
