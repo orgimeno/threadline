@@ -1,7 +1,7 @@
 import OpenAI from 'openai'
 
 import type { ContextEntry, ExtractionProposalDocument } from '../domain/threadline-schema.js'
-import { validateExtractionProposal } from '../domain/threadline-validator.js'
+import { validateExtractionProposal, type SchemaValidationIssue } from '../domain/threadline-validator.js'
 import type { PreparedExtractionRequest } from './extraction-request.js'
 
 const MAX_SOURCE_TOKENS = 12_000
@@ -15,7 +15,29 @@ export function resolveOpenAIModel(value: string | undefined): string {
   return model === undefined || model.length === 0 ? DEFAULT_OPENAI_MODEL : model
 }
 
-export class ExtractionError extends Error {}
+export interface LocatorVerificationFailure {
+  file: string
+  location: string
+  expectedFile: string
+  format: 'json' | 'markdown'
+}
+
+export class ExtractionError extends Error {
+  constructor(
+    message: string,
+    options?: ErrorOptions & {
+      invalidReferences?: LocatorVerificationFailure[]
+      validationIssues?: SchemaValidationIssue[]
+    },
+  ) {
+    super(message, options)
+    this.invalidReferences = options?.invalidReferences
+    this.validationIssues = options?.validationIssues
+  }
+
+  readonly invalidReferences: LocatorVerificationFailure[] | undefined
+  readonly validationIssues: SchemaValidationIssue[] | undefined
+}
 
 export interface ExtractionService {
   extract(requests: readonly PreparedExtractionRequest[]): Promise<ContextEntry[]>
@@ -43,6 +65,7 @@ function locatorExists(request: PreparedExtractionRequest, file: string, locatio
     return Number(match[1]) <= Number(match[2]) && Number(match[2]) <= lines
   }
   try {
+    if (location !== '' && !location.startsWith('/')) return false
     const pointer = location === '' ? [] : location.slice(1).split('/').map((part) => part.replace(/~1/g, '/').replace(/~0/g, '~'))
     let value: unknown = JSON.parse(request.source.content)
     for (const part of pointer) {
@@ -82,8 +105,25 @@ export class OpenAIExtractor {
       let raw: unknown
       try { raw = JSON.parse(response.output_text) } catch { throw new ExtractionError('OpenAI returned an invalid structured response.') }
       const proposal = validateExtractionProposal(raw)
-      if (!proposal.valid || !proposal.value.entries.every((entry) => entry.sourceReferences.every((reference) => locatorExists(request, reference.file, reference.location)))) {
-        throw new ExtractionError('OpenAI returned entries that could not be verified against their source.')
+      if (!proposal.valid) {
+        throw new ExtractionError('OpenAI returned structured entries with invalid fields or source references.', {
+          validationIssues: proposal.issues,
+        })
+      }
+      const invalidReferences = proposal.value.entries
+        .flatMap((entry) => entry.sourceReferences)
+        .filter((reference) => !locatorExists(request, reference.file, reference.location))
+        .map((reference) => ({
+          file: reference.file,
+          location: reference.location,
+          expectedFile: request.source.file,
+          format: request.source.format,
+        }))
+      if (invalidReferences.length > 0) {
+        throw new ExtractionError(
+          'OpenAI returned entries that could not be verified against their source.',
+          { invalidReferences },
+        )
       }
       for (const proposalEntry of proposal.value.entries) entries.push({ ...proposalEntry, id: `entry-${String(entries.length + 1).padStart(3, '0')}`, status: 'pending' })
     }

@@ -13,6 +13,9 @@ Rules:
 - Use only the entry types allowed by the supplied JSON Schema.
 - Preserve uncertainty by using null date values when evidence is insufficient.
 - Return exact source locations using the locator strategy declared with the source.
+- For json-pointer, use an RFC 6901 JSON Pointer: an empty string for the whole document or a slash-prefixed path such as /messages/0/content. Never use dot notation, brackets, line numbers, or a filename as the location.
+- For markdown-line-range, use exactly the form lines N-M, such as lines 4-6. N and M must be the visible one-based line numbers in the supplied source; never use a heading name or a JSON Pointer.
+- Set sourceReferences.file to the exact Source file value shown above, including its extension.
 - Do not create id or status fields; the Threadline backend owns them.
 - Return an empty entries array when the source contains no useful context.
 - Return only JSON matching the supplied schema.`

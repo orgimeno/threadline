@@ -133,9 +133,15 @@ export function importRoutes(extractor?: ExtractionService, sessions?: SessionSt
     try {
       entries = await extractor.extract(prepareExtractionRequests(sources))
       sessions.replace(entries as never)
-    } catch (error) {
-      app.log.error({ err: error }, 'OpenAI extraction failed')
-      const message = error instanceof ExtractionError ? error.message : 'OpenAI could not process this import.'
+      } catch (error) {
+        app.log.error({ err: error }, 'OpenAI extraction failed')
+        if (error instanceof ExtractionError && error.invalidReferences !== undefined) {
+          app.log.warn({ invalidReferences: error.invalidReferences }, 'Rejected unverified OpenAI source references')
+        }
+        if (error instanceof ExtractionError && error.validationIssues !== undefined) {
+          app.log.warn({ validationIssues: error.validationIssues }, 'Rejected invalid OpenAI structured response')
+        }
+        const message = error instanceof ExtractionError ? error.message : 'OpenAI could not process this import.'
       return reply.code(502).send(httpError('extraction_failed', message))
     }
     return reply.send({

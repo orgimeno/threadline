@@ -75,6 +75,7 @@ describe('OpenAI extraction adapter', () => {
         store: false,
       }),
     )
+    expect(createResponse.mock.calls[0]?.[0]?.instructions).toContain('/messages/0/content')
     expect(entries).toMatchObject([
       {
         id: 'entry-001',
@@ -82,6 +83,37 @@ describe('OpenAI extraction adapter', () => {
         type: 'preference',
       },
     ])
+  })
+
+  it('rejects a non-existent JSON Pointer and retains safe debugging details', async () => {
+    const sourceResult = validateSource(
+      'fictional-conversation.json',
+      'files',
+      Buffer.from('{"messages":[{"content":"Fictional context."}]}'),
+    )
+    expect(sourceResult.source).toBeDefined()
+    createResponse.mockResolvedValue({
+      output_text: JSON.stringify({
+        entries: [{
+          type: 'fact',
+          content: 'Fictional context.',
+          date: { original: null, normalized: null, precision: 'unknown', timezone: null },
+          sourceReferences: [{ file: 'fictional-conversation.json', location: '/messages/99/content' }],
+        }],
+      }),
+    })
+
+    const extractor = new OpenAIExtractor('test-api-key', 'gpt-5.6-terra-test')
+
+    await expect(extractor.extract(prepareExtractionRequests([sourceResult.source!]))).rejects.toMatchObject({
+      message: 'OpenAI returned entries that could not be verified against their source.',
+      invalidReferences: [{
+        file: 'fictional-conversation.json',
+        location: '/messages/99/content',
+        expectedFile: 'fictional-conversation.json',
+        format: 'json',
+      }],
+    })
   })
 
   it('uses the environment value when present and one explicit fallback otherwise', () => {
