@@ -1,0 +1,49 @@
+{
+  "conversation_id": "fictional-harbor-planning-2031",
+  "title": "Harbor workshop planning",
+  "exported_at": "2031-04-18T16:30:00+02:00",
+  "messages": [
+    {
+      "id": "m-001",
+      "role": "user",
+      "created_at": "2031-04-02T09:15:00+02:00",
+      "content": "I am starting a fictional project called Harbor: a small online workshop where local artists can share process notes and receive peer feedback."
+    },
+    {
+      "id": "m-002",
+      "role": "user",
+      "created_at": "2031-04-02T09:22:00+02:00",
+      "content": "The working title used to be Canvas, but Harbor is the final name from now on."
+    },
+    {
+      "id": "m-003",
+      "role": "user",
+      "created_at": "2031-04-03T11:00:00+02:00",
+      "content": "For project communication, I prefer concise weekly written updates every Friday morning, with no more than five bullet points."
+    },
+    {
+      "id": "m-004",
+      "role": "user",
+      "created_at": "2031-04-04T14:10:00+02:00",
+      "content": "The fictional onboarding session is scheduled for May 6, 2031 at 10:00 in Europe/Madrid."
+    },
+    {
+      "id": "m-005",
+      "role": "user",
+      "created_at": "2031-04-05T16:40:00+02:00",
+      "content": "Do not include artists' contact details, personal addresses, or private messages in shared project summaries."
+    },
+    {
+      "id": "m-006",
+      "role": "user",
+      "created_at": "2031-04-10T10:30:00+02:00",
+      "content": "The first prototype review is planned for May 20, 2031. The goal is to check whether people can publish a process note and request feedback without assistance."
+    },
+    {
+      "id": "m-007",
+      "role": "user",
+      "created_at": "2031-04-12T15:05:00+02:00",
+      "content": "Success for the first release means that five fictional artists complete the onboarding exercise and leave at least one useful peer comment each."
+    }
+  ]
+}

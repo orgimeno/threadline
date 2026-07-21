@@ -46,7 +46,7 @@ The default addresses are:
 ### Valid sources
 
 1. Open `http://localhost:5173`.
-2. Select one file from `examples/sample-input`, then drag or select the second file to confirm that the selection is additive.
+2. Select `examples/sample-input/fictional-harbor-conversation.json`, then drag or select `examples/sample-input/fictional-harbor-project-notes.md` to confirm that the selection is additive.
 3. Confirm that the button changes from disabled to **Validate selected sources**.
 4. Submit the files.
 5. Confirm that both sources appear as `validated`.
